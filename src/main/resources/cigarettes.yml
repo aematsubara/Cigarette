@@ -1,0 +1,60 @@
+# Available settings:
+# # craft > if the cigarette can be crafted.
+# # duration > the duration of the cigarette; when time is up, it breaks (only for non-virtual).
+# # material > the material of the item used for the cigarette (TORCH/REDSTONE_TORCH).
+# # display_name & lore > self explanatory.
+# # effects > the effects that'll be applied to the player. Format: EFFECT_TYPE, DURATION, AMPLIFIER (0 -> level 1).
+# # crafting.shaped > whether the cigarette recipe is shaped (like WORKBENCH) or not (like FLINT_AND_STEEL).
+# # crafting.ingredients > the ingredients that'll be used for the recipe. Format: MATERIAL_NAME, KEY (used for shape, see below).
+# # crafting.shape > the shape that'll be used on the crafting table, using the KEY specified (only 3 lines required, spaces are used as AIR).
+# # particles > the particle that'll be used when smoking. Format: PARTICLE_NAME, AMOUNT, rX, rY, rZ, SPEED (r = random offset).
+#
+# In this example, the required ingredients are 6 of PAPER (3 in horizontal left and right) and 3 (3 in horizontal center) of GUNPOWDER.
+# You can use spaces to represent AIR (nothing).
+# ingredients:
+#   - PAPER, P
+#   - GUNPOWDER, G
+# shape:
+#   - "PGP"
+#   - "PGP"
+#   - "PGP"
+#
+# NOTE: This plugin doesn't replace recipes; that means, if the recipe already exists for a vanilla item, the vanilla one is used.
+#
+# If the duration or the amplifier is not specified, 2 minutes and amplifier 0 (level 1) will be used by default.
+cigarettes:
+  marlboro:
+    craft: true
+    duration: 30
+    material: TORCH
+    display-name: "&c&lMARLBORO"
+    lore:
+      - "&7Smoking kills."
+    effects: []
+    crafting:
+      shaped: true
+      ingredients:
+        - PAPER, P
+        - GUNPOWDER, G
+      shape:
+        - PGP
+        - PGP
+        - PGP
+    particles: SMOKE_NORMAL, 5, 0.1, 0.1, 0.1, 0.001
+  cannabis:
+    craft: true
+    duration: 60
+    material: REDSTONE_TORCH
+    display-name: "&a&lCANNABIS"
+    lore:
+      - "&7&oI'd like to fly, but my wings"
+      - "&7&ohave been so denied..."
+    effects:
+      - CONFUSION, 60, 0
+    crafting:
+      shaped: false
+      ingredients:
+        - PAPER
+        - GUNPOWDER
+      shape: []
+    particles: SMOKE_LARGE, 5, 0.1, 0.1, 0.1, 0.005

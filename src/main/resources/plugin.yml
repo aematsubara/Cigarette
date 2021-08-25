@@ -1,0 +1,11 @@
+name: Cigarette
+version: ${project.version}
+main: me.matsubara.cigarette.CigarettePlugin
+api-version: 1.13
+author: Matsubara
+description: Light a cigarette in Minecraft, inspired by the old RealCigaret plugin.
+
+commands:
+  cigarette:
+    usage: /<command>
+    description: main command.

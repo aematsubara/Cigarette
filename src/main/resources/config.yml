@@ -1,0 +1,11 @@
+sounds:
+  light: "ITEM_FLINTANDSTEEL_USE, 1.0, 1.0"
+  extinguish: "BLOCK_LAVA_EXTINGUISH, 1.0, 1.0"
+  smoke: "BLOCK_FIRE_AMBIENT, 1.0, 1.0"
+
+messages:
+  usage: "&aUsage: /cigarette reload or /cigarette get <name>"
+  reload: "&aPlugin reloaded!"
+  unknown: "&cThat cigarette doesn't exists."
+  extinguish: "&aYour cigarette is over."
+  light: "&aCiggy lighted!"
