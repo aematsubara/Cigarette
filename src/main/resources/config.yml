@@ -4,6 +4,7 @@ sounds:
   smoke: "BLOCK_FIRE_AMBIENT, 1.0, 1.0"
 
 messages:
+  no-permission: "&cYou don't have permission to execute this command."
   usage: "&aUsage: /cigarette reload or /cigarette get <name>"
   reload: "&aPlugin reloaded!"
   unknown: "&cThat cigarette doesn't exists."

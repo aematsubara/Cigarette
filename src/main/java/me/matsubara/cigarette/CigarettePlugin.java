@@ -54,6 +54,11 @@ public final class CigarettePlugin extends JavaPlugin {
             if (sender instanceof Player) {
                 Player player = (Player) sender;
 
+                if (!player.hasPermission("cigarette.admin")) {
+                    player.sendMessage(getString("messages.no-permission"));
+                    return true;
+                }
+
                 if (args.length == 0 || args.length > 2) {
                     player.sendMessage(getString("messages.usage"));
                 } else if (args.length == 1) {
@@ -92,6 +97,8 @@ public final class CigarettePlugin extends JavaPlugin {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (command.getName().equalsIgnoreCase("cigarette")) {
+            if (!sender.hasPermission("cigarette.admin")) return null;
+
             if (args.length == 1) {
                 return StringUtil.copyPartialMatches(args[0], Arrays.asList("get", "reload"), new ArrayList<>());
             }
