@@ -77,6 +77,10 @@ public final class CigaretteTypes {
             ItemMeta meta = item.getItemMeta();
             meta.setDisplayName(displayName);
             meta.setLore(lore);
+
+            int modelData = configuration.getInt("cigarettes." + path + ".model-data", Integer.MIN_VALUE);
+            if (modelData != Integer.MIN_VALUE) meta.setCustomModelData(modelData);
+
             item.setItemMeta(meta);
 
             List<String> effects = configuration.getStringList("cigarettes." + path + ".effects");

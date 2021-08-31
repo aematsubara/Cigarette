@@ -2,7 +2,8 @@
 # # craft > if the cigarette can be crafted.
 # # duration > the duration of the cigarette; when time is up, it breaks (only for non-virtual).
 # # material > the material of the item used for the cigarette (TORCH/REDSTONE_TORCH).
-# # display_name & lore > self explanatory.
+# # model-data > the custom model data id, used for custom resource packs.
+# # display_name & lore > self-explanatory.
 # # effects > the effects that'll be applied to the player. Format: EFFECT_TYPE, DURATION, AMPLIFIER (0 -> level 1).
 # # crafting.shaped > whether the cigarette recipe is shaped (like WORKBENCH) or not (like FLINT_AND_STEEL).
 # # crafting.ingredients > the ingredients that'll be used for the recipe. Format: MATERIAL_NAME, KEY (used for shape, see below).
@@ -27,6 +28,7 @@ cigarettes:
     craft: true
     duration: 30
     material: TORCH
+    model-data: 123
     display-name: "&c&lMARLBORO"
     lore:
       - "&7Smoking kills."
@@ -45,6 +47,7 @@ cigarettes:
     craft: true
     duration: 60
     material: REDSTONE_TORCH
+    model-data: 124
     display-name: "&a&lCANNABIS"
     lore:
       - "&7&oI'd like to fly, but my wings"

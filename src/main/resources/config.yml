@@ -1,3 +1,6 @@
+# If true, when drinking milk the cigarette will be extinguished.
+remove-when-drinking-milk: true
+
 sounds:
   light: "ITEM_FLINTANDSTEEL_USE, 1.0, 1.0"
   extinguish: "BLOCK_LAVA_EXTINGUISH, 1.0, 1.0"

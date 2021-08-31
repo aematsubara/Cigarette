@@ -5,6 +5,7 @@ import me.matsubara.cigarette.cigarette.Cigarette;
 import me.matsubara.cigarette.cigarette.CigaretteType;
 import me.matsubara.cigarette.file.CigaretteTypes;
 import me.matsubara.cigarette.listener.PlayerInteract;
+import me.matsubara.cigarette.listener.PlayerItemConsume;
 import me.matsubara.cigarette.listener.PlayerMove;
 import me.matsubara.cigarette.listener.PlayerQuit;
 import me.matsubara.cigarette.util.PluginUtils;
@@ -37,6 +38,7 @@ public final class CigarettePlugin extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new PlayerMove(this), this);
         getServer().getPluginManager().registerEvents(new PlayerInteract(this), this);
+        getServer().getPluginManager().registerEvents(new PlayerItemConsume(this), this);
         getServer().getPluginManager().registerEvents(new PlayerQuit(this), this);
 
         saveDefaultConfig();
