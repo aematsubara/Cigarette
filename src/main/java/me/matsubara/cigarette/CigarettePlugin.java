@@ -18,6 +18,7 @@ import org.bukkit.util.StringUtil;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("NullableProblems")
 public final class CigarettePlugin extends JavaPlugin {
 
     private Set<Cigarette> cigarettes;
