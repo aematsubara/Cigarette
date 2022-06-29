@@ -1,7 +1,7 @@
 package me.matsubara.cigarette.util;
 
-import com.cryptomorin.xseries.ReflectionUtils;
 import net.md_5.bungee.api.ChatColor;
+import org.bukkit.Bukkit;
 import org.bukkit.util.Vector;
 
 import java.util.List;
@@ -10,7 +10,10 @@ import java.util.regex.Pattern;
 
 public final class PluginUtils {
 
-    private final static Pattern PATTERN = Pattern.compile("&#([0-9a-fA-F]{6})");
+    public final static String VERSION = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
+    public final static int MINOR_VERSION = Integer.parseInt(VERSION.split("_")[1]);
+
+    private final static Pattern PATTERN = Pattern.compile("&#([\\da-fA-F]{6})");
 
     public static Vector offsetVector(Vector vector, float yawDegrees, float pitchDegrees) {
         double yaw = Math.toRadians(-1.0d * (yawDegrees + 90.0f));
@@ -39,7 +42,7 @@ public final class PluginUtils {
     }
 
     public static String translate(String message) {
-        if (ReflectionUtils.VER < 16) return oldTranslate(message);
+        if (PluginUtils.MINOR_VERSION < 16) return oldTranslate(message);
 
         Matcher matcher = PATTERN.matcher(oldTranslate(message));
         StringBuffer buffer = new StringBuffer();

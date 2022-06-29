@@ -1,10 +1,9 @@
 package me.matsubara.cigarette.data;
 
-import com.cryptomorin.xseries.ReflectionUtils;
-import com.cryptomorin.xseries.XMaterial;
 import com.google.common.base.Strings;
 import me.matsubara.cigarette.CigarettePlugin;
-import org.apache.commons.lang.StringUtils;
+import me.matsubara.cigarette.util.Lang3Utils;
+import me.matsubara.cigarette.util.PluginUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -14,7 +13,6 @@ import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.ShapelessRecipe;
 
 import java.util.List;
-import java.util.Optional;
 
 @SuppressWarnings("unused")
 public final class Shape {
@@ -40,7 +38,7 @@ public final class Shape {
     @SuppressWarnings("deprecation")
     public void register(ItemStack item) {
         // Since 1.12, a namespaced key is required.
-        if (ReflectionUtils.VER > 11) {
+        if (PluginUtils.MINOR_VERSION > 11) {
             NamespacedKey key = new NamespacedKey(plugin, "cigarette_" + name);
             recipe = shaped ? new ShapedRecipe(key, item) : new ShapelessRecipe(key, item);
         } else {
@@ -53,13 +51,10 @@ public final class Shape {
 
         for (String ingredient : ingredients) {
             if (Strings.isNullOrEmpty(ingredient) || ingredient.equalsIgnoreCase("none")) continue;
-            String[] split = StringUtils.split(StringUtils.deleteWhitespace(ingredient), ',');
-            if (split.length == 0) split = StringUtils.split(ingredient, ' ');
+            String[] split = Lang3Utils.split(Lang3Utils.deleteWhitespace(ingredient), ',');
+            if (split.length == 0) split = Lang3Utils.split(ingredient, ' ');
 
-            Optional<XMaterial> typeOpt = XMaterial.matchXMaterial(split[0]);
-            if (!typeOpt.isPresent()) continue;
-            Material type = typeOpt.get().parseMaterial();
-            if (type == null) return;
+            Material type = Material.valueOf(split[0]);
 
             char key = ' ';
 

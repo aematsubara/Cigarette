@@ -1,6 +1,6 @@
 package me.matsubara.cigarette.data;
 
-import org.apache.commons.lang.Validate;
+import com.google.common.base.Preconditions;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 
@@ -22,7 +22,7 @@ public final class Smoke {
 
     public void playAt(Location location) {
         if (particle == null) return;
-        Validate.notNull(location.getWorld(), "World can't be null.");
+        Preconditions.checkArgument(location.getWorld() != null, "World can't be null.");
 
         location.getWorld().spawnParticle(particle, location, amount, randomX, randomY, randomZ, speed);
     }

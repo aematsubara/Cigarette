@@ -1,12 +1,13 @@
 package me.matsubara.cigarette.cigarette;
 
-import com.cryptomorin.xseries.XPotion;
-import com.cryptomorin.xseries.XSound;
+import com.google.common.base.Preconditions;
 import me.matsubara.cigarette.CigarettePlugin;
+import me.matsubara.cigarette.util.Lang3Utils;
 import me.matsubara.cigarette.util.PluginUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -46,8 +47,8 @@ public final class Cigarette {
 
     private int startTask(Player owner) {
         // Play lit sound.
-        XSound.play(stand.getLocation(), plugin.getString("sounds.light"));
-        XPotion.addPotionEffectsFromString(owner, type.getEffects());
+        playSound(stand.getLocation(), plugin.getString("sounds.light"));
+        if (!type.getPotionEffects().isEmpty()) owner.addPotionEffects(type.getPotionEffects());
         show(true);
 
         return new BukkitRunnable() {
@@ -63,7 +64,7 @@ public final class Cigarette {
 
                 int delayInSeconds = 2;
                 if (count % delayInSeconds == 0 && isVisible()) {
-                    XSound.play(stand.getLocation(), plugin.getString("sounds.smoke"));
+                    playSound(stand.getLocation(), plugin.getString("sounds.smoke"));
 
                     Location location = owner.getEyeLocation().clone();
                     location.add(PluginUtils.offsetVector(new Vector(0.3d, -0.1d, 0.0d), location.getYaw(), location.getPitch()));
@@ -84,7 +85,7 @@ public final class Cigarette {
     }
 
     public void extinguish() {
-        XSound.play(stand.getLocation(), plugin.getString("sounds.extinguish"));
+        playSound(stand.getLocation(), plugin.getString("sounds.extinguish"));
         stand.remove();
         plugin.getCigarettes().remove(this);
 
@@ -97,6 +98,27 @@ public final class Cigarette {
         }
 
         cancelTask();
+    }
+
+    private void playSound(Location location, String soundName) {
+        Preconditions.checkArgument(location.getWorld() != null, "World can't be null.");
+        String[] split = Lang3Utils.split(Lang3Utils.deleteWhitespace(soundName), ',');
+        if (split.length == 0) split = Lang3Utils.split(soundName, ' ');
+
+        Sound sound = Sound.valueOf(split[0]);
+
+        float volume = 1.0f;
+        float pitch = 1.0f;
+
+        try {
+            if (split.length > 1) {
+                volume = Float.parseFloat(split[1]);
+                if (split.length > 2) pitch = Float.parseFloat(split[2]);
+            }
+        } catch (NumberFormatException ignored) {
+        }
+
+        location.getWorld().playSound(location, sound, volume, pitch);
     }
 
     public boolean isVisible() {

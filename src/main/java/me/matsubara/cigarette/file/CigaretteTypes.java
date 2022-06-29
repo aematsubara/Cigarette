@@ -1,15 +1,14 @@
 package me.matsubara.cigarette.file;
 
-import com.cryptomorin.xseries.XMaterial;
 import com.google.common.base.Enums;
-import com.google.common.base.Strings;
 import me.matsubara.cigarette.CigarettePlugin;
 import me.matsubara.cigarette.cigarette.CigaretteType;
 import me.matsubara.cigarette.data.Shape;
 import me.matsubara.cigarette.data.Smoke;
+import me.matsubara.cigarette.util.Lang3Utils;
 import me.matsubara.cigarette.util.PluginUtils;
-import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.configuration.ConfigurationSection;
@@ -73,8 +72,11 @@ public final class CigaretteTypes {
             int duration = configuration.getInt("cigarettes." + path + ".duration");
 
             String material = configuration.getString("cigarettes." + path + ".material");
-            ItemStack item = XMaterial.matchXMaterial(material).get().parseItem();
+            ItemStack item = new ItemStack(Material.valueOf(material));
+
             ItemMeta meta = item.getItemMeta();
+            if (meta == null) continue;
+
             meta.setDisplayName(displayName);
             meta.setLore(lore);
 
@@ -104,10 +106,9 @@ public final class CigaretteTypes {
     private Smoke getSmoke(String path) {
         String particleString = configuration.getString("cigarettes." + path + ".particles");
 
-        if (Strings.isNullOrEmpty(particleString) || particleString.equalsIgnoreCase("none")) return null;
-        String[] split = StringUtils.split(StringUtils.deleteWhitespace(particleString), ',');
-        if (split.length == 0) split = StringUtils.split(particleString, ' ');
-
+        if (particleString == null || particleString.isEmpty() || particleString.equalsIgnoreCase("none")) return null;
+        String[] split = Lang3Utils.split(Lang3Utils.deleteWhitespace(particleString), ',');
+        if (split.length == 0) split = Lang3Utils.split(particleString, ' ');
 
         Particle particle = Enums.getIfPresent(Particle.class, split[0]).orNull();
         if (particle == null) return null;

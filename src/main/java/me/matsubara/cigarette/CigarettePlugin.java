@@ -1,6 +1,5 @@
 package me.matsubara.cigarette;
 
-import com.cryptomorin.xseries.ReflectionUtils;
 import me.matsubara.cigarette.cigarette.Cigarette;
 import me.matsubara.cigarette.cigarette.CigaretteType;
 import me.matsubara.cigarette.file.CigaretteTypes;
@@ -22,12 +21,11 @@ import java.util.stream.Collectors;
 public final class CigarettePlugin extends JavaPlugin {
 
     private Set<Cigarette> cigarettes;
-
     private CigaretteTypes types;
 
     @Override
     public void onEnable() {
-        if (ReflectionUtils.VER < 15) {
+        if (PluginUtils.MINOR_VERSION < 15) {
             getLogger().severe("This plugin only works from 1.15.2 and up, disabling...");
             getServer().getPluginManager().disablePlugin(this);
             return;
