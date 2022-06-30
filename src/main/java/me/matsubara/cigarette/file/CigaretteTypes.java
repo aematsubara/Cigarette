@@ -72,7 +72,7 @@ public final class CigaretteTypes {
             int duration = configuration.getInt("cigarettes." + path + ".duration");
 
             String material = configuration.getString("cigarettes." + path + ".material");
-            ItemStack item = new ItemStack(Material.valueOf(material));
+            ItemStack item = new ItemStack(Material.valueOf(material.toUpperCase()));
 
             ItemMeta meta = item.getItemMeta();
             if (meta == null) continue;
