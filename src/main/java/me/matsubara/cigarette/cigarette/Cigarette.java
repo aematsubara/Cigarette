@@ -1,109 +1,138 @@
 package me.matsubara.cigarette.cigarette;
 
 import com.google.common.base.Preconditions;
+import lombok.Getter;
 import me.matsubara.cigarette.CigarettePlugin;
-import me.matsubara.cigarette.util.Lang3Utils;
 import me.matsubara.cigarette.util.PluginUtils;
-import org.bukkit.Bukkit;
+import org.apache.commons.lang3.StringUtils;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
-@SuppressWarnings("unused")
-public final class Cigarette {
+@Getter
+public final class Cigarette extends BukkitRunnable {
 
     private final CigarettePlugin plugin;
 
-    private final UUID owner;
-    private final ItemStack item;
+    private final Player owner;
     private final CigaretteType type;
     private final ArmorStand stand;
     private final UUID standId;
     private final int taskId;
+    private final Map<UUID, Long> secondHandSmoke;
+    private int count = 0;
 
-    public Cigarette(CigarettePlugin plugin, Player owner, ItemStack item, CigaretteType type) {
+    public Cigarette(@NotNull CigarettePlugin plugin, @NotNull Player owner, @NotNull CigaretteType type) {
+        this.plugin = plugin;
+        this.owner = owner;
+        this.type = type;
+
         // Copy location from player and add an offset.
         Location location = owner.getLocation().clone();
-        location.add(PluginUtils.offsetVector(new Vector(0.0d, 0.0d, -0.35d), location.getYaw(), location.getPitch()));
+        location.add(PluginUtils.offsetVector(type.getMaterialType().getOffset(), location.getYaw(), location.getPitch()));
+        this.stand = owner.getWorld().spawn(location.add(getHeight()), ArmorStand.class, this::init);
 
-        this.plugin = plugin;
-        this.owner = owner.getUniqueId();
-        this.item = item;
-        this.type = type;
-        this.stand = owner.getWorld().spawn(location.add(0.0d, 0.68d, 0.0d), ArmorStand.class, this::init);
         this.standId = stand.getUniqueId();
-        this.taskId = startTask(owner);
+
+        // Play lit sound.
+        playSound(stand.getLocation(), type.getLightSound());
+        if (!type.getEffects().isEmpty()) owner.addPotionEffects(type.getEffects());
+        show(true);
+
+        this.taskId = runTaskTimer(plugin, 0L, 1L).getTaskId();
+
+        this.secondHandSmoke = new HashMap<>();
         plugin.getCigarettes().add(this);
     }
 
-    private int startTask(Player owner) {
-        // Play lit sound.
-        playSound(stand.getLocation(), plugin.getString("sounds.light"));
-        if (!type.getPotionEffects().isEmpty()) owner.addPotionEffects(type.getPotionEffects());
-        show(true);
+    @Override
+    public void run() {
+        // Extinguish if time is over.
+        if (count / 20 == type.getDuration()) {
+            owner.sendMessage(plugin.getString(CigarettePlugin.MSG_EXTINGUISH));
+            extinguish();
+            cancel();
+        }
 
-        return new BukkitRunnable() {
-            int count = 0;
+        // Spawn particles & play ambient sound.
+        if (count % 40 == 0 && isVisible()) {
+            Location effectsLocation = type.getMaterialType().getEffectsLocationFromPlayer(owner);
+            playSound(effectsLocation, type.getSmokeSound());
+            if (type.getSmoke() != null) type.getSmoke().playAt(effectsLocation);
+        }
 
-            @Override
-            public void run() {
-                if (count == type.getDuration()) {
-                    owner.sendMessage(plugin.getString("messages.extinguish"));
-                    extinguish();
-                    cancel();
+        if (type.isSecondHandSmoke()) {
+            for (Entity near : owner.getNearbyEntities(2.5, 2.5d, 2.5d)) {
+                if (!(near instanceof Player player)
+                        || player.equals(owner)
+                        || player.hasPermission("cigarette.bypass.secondhandsmoke")) continue;
+
+                Long last = secondHandSmoke.getOrDefault(player.getUniqueId(), 0L);
+                if (System.currentTimeMillis() < last) continue;
+
+                // Half of resting time.
+                int time = Math.max(1, (type.getDuration() - count / 20) / 2);
+                for (PotionEffect effect : type.getEffects()) {
+                    player.addPotionEffect(new PotionEffect(
+                            effect.getType(),
+                            time * 20,
+                            effect.getAmplifier(),
+                            effect.isAmbient(),
+                            effect.hasParticles(),
+                            effect.hasIcon()));
                 }
 
-                int delayInSeconds = 2;
-                if (count % delayInSeconds == 0 && isVisible()) {
-                    playSound(stand.getLocation(), plugin.getString("sounds.smoke"));
-
-                    Location location = owner.getEyeLocation().clone();
-                    location.add(PluginUtils.offsetVector(new Vector(0.3d, -0.1d, 0.0d), location.getYaw(), location.getPitch()));
-                    if (type.getSmoke() != null) {
-                        type.getSmoke().playAt(location);
-                    }
-                }
-
-                count++;
+                secondHandSmoke.put(player.getUniqueId(), System.currentTimeMillis() + time * 1000L);
             }
-        }.runTaskTimer(plugin, 0L, 20L).getTaskId();
+        }
+
+        // Teleport ciggy.
+        Location location = owner.getLocation().clone();
+        location.add(PluginUtils.offsetVector(type.getMaterialType().getOffset(), location.getYaw(), location.getPitch()));
+
+        stand.teleport(location.add(getHeight()));
+
+        float pitch = owner.getLocation().getPitch();
+        show((pitch > -14.0f) && (pitch < 20.0f));
+
+        count++;
     }
 
-    public void cancelTask() {
-        if (taskId != -1) {
-            plugin.getServer().getScheduler().cancelTask(taskId);
-        }
+    private Vector getHeight() {
+        return type.getMaterialType().getHeight(owner.isSneaking());
     }
 
     public void extinguish() {
-        playSound(stand.getLocation(), plugin.getString("sounds.extinguish"));
+        playSound(stand.getLocation(), type.getExtinguishSound());
         stand.remove();
         plugin.getCigarettes().remove(this);
 
-        // Remove previous effects.
-        Player owner = getOwnerAsPlayer();
-        if (owner != null) {
-            for (PotionEffect effect : type.getPotionEffects()) {
-                owner.removePotionEffect(effect.getType());
-            }
-        }
+        if (taskId != -1) plugin.getServer().getScheduler().cancelTask(taskId);
 
-        cancelTask();
+        if (owner == null || !owner.isOnline()) return;
+        for (PotionEffect effect : type.getEffects()) {
+            owner.removePotionEffect(effect.getType());
+        }
     }
 
-    private void playSound(Location location, String soundName) {
+    private void playSound(@NotNull Location location, String soundName) {
+        if (soundName == null) return;
+
         Preconditions.checkArgument(location.getWorld() != null, "World can't be null.");
-        String[] split = Lang3Utils.split(Lang3Utils.deleteWhitespace(soundName), ',');
-        if (split.length == 0) split = Lang3Utils.split(soundName, ' ');
+        String[] split = StringUtils.split(StringUtils.deleteWhitespace(soundName), ',');
+        if (split.length == 0) split = StringUtils.split(soundName, ' ');
 
         Sound sound = Sound.valueOf(split[0]);
 
@@ -128,53 +157,20 @@ public final class Cigarette {
     }
 
     public void show(boolean show) {
-        if (stand.getEquipment() != null) {
-            stand.getEquipment().setItemInMainHand(show ? type.getItem() : null);
-        }
+        EntityEquipment equipment = stand.getEquipment();
+        if (equipment != null) equipment.setItemInMainHand(show ? type.getItem() : null);
     }
 
-    private void init(ArmorStand stand) {
+    private void init(@NotNull ArmorStand stand) {
         stand.setAI(false);
         stand.setArms(false);
         stand.setBasePlate(false);
         stand.setCollidable(false);
         stand.setGravity(false);
-
-        // Prevent stand respawning on restart.
         stand.setPersistent(false);
-
         stand.setVisible(false);
-        stand.setMarker(true);
         stand.setSilent(true);
-        stand.setFireTicks(Integer.MAX_VALUE);
-        stand.setRightArmPose(new EulerAngle(0.0d, 0.0d, 0.0d));
-    }
-
-    public UUID getOwner() {
-        return owner;
-    }
-
-    public ItemStack getItem() {
-        return item;
-    }
-
-    public Player getOwnerAsPlayer() {
-        return Bukkit.getPlayer(owner);
-    }
-
-    public CigaretteType getType() {
-        return type;
-    }
-
-    public ArmorStand getStand() {
-        return stand;
-    }
-
-    public UUID getStandId() {
-        return standId;
-    }
-
-    public int getTaskId() {
-        return taskId;
+        stand.setRightArmPose(type.getMaterialType().getAngle());
+        stand.setSmall(type.getMaterialType().isSmall());
     }
 }

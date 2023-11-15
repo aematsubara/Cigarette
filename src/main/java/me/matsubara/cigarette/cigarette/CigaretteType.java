@@ -1,8 +1,9 @@
 package me.matsubara.cigarette.cigarette;
 
+import lombok.Getter;
 import me.matsubara.cigarette.data.Shape;
 import me.matsubara.cigarette.data.Smoke;
-import me.matsubara.cigarette.util.Lang3Utils;
+import org.apache.commons.lang3.StringUtils;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -12,43 +13,52 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings("unused")
+@Getter
 public final class CigaretteType {
 
     private final String name;
+    private final MaterialType materialType;
     private final int duration;
     private final ItemStack item;
     private final List<String> effects;
     private final Shape shape;
     private final Smoke smoke;
+    private final String lightSound;
+    private final String extinguishSound;
+    private final String smokeSound;
+    private final boolean secondHandSmoke;
+    private final boolean requiresLightning;
 
     private List<PotionEffect> cache;
 
-    public CigaretteType(String name, int duration, ItemStack item, List<String> effects, Shape shape, Smoke smoke) {
+    public CigaretteType(
+            String name,
+            MaterialType materialType,
+            int duration,
+            ItemStack item,
+            List<String> effects,
+            Shape shape,
+            Smoke smoke,
+            String lightSound,
+            String extinguishSound,
+            String smokeSound,
+            boolean secondHandSmoke,
+            boolean requiresLightning) {
         this.name = name;
+        this.materialType = materialType;
         this.duration = duration;
         this.item = item;
         this.effects = effects;
         this.shape = shape;
         this.smoke = smoke;
+        this.lightSound = lightSound;
+        this.extinguishSound = extinguishSound;
+        this.smokeSound = smokeSound;
+        this.secondHandSmoke = secondHandSmoke;
+        this.requiresLightning = requiresLightning;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public int getDuration() {
-        return duration;
-    }
-
-    public ItemStack getItem() {
-        return item;
-    }
-
-    public List<String> getEffects() {
-        return effects;
-    }
-
-    public List<PotionEffect> getPotionEffects() {
+    public List<PotionEffect> getEffects() {
         if (cache != null) return cache;
 
         List<PotionEffect> temp = new ArrayList<>();
@@ -61,18 +71,10 @@ public final class CigaretteType {
         return cache = temp;
     }
 
-    public Shape getShape() {
-        return shape;
-    }
-
-    public Smoke getSmoke() {
-        return smoke;
-    }
-
     private PotionEffect parsePotionEffectFromString(@Nullable String potion) {
         if (potion == null || potion.isEmpty() || potion.equalsIgnoreCase("none")) return null;
-        String[] split = Lang3Utils.split(Lang3Utils.deleteWhitespace(potion), ',');
-        if (split.length == 0) split = Lang3Utils.split(potion, ' ');
+        String[] split = StringUtils.split(StringUtils.deleteWhitespace(potion), ',');
+        if (split.length == 0) split = StringUtils.split(potion, ' ');
 
         PotionEffectType type = PotionEffectType.getByName(split[0]);
         if (type == null) return null;

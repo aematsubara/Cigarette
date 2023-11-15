@@ -2,8 +2,8 @@ package me.matsubara.cigarette.data;
 
 import com.google.common.base.Strings;
 import me.matsubara.cigarette.CigarettePlugin;
-import me.matsubara.cigarette.util.Lang3Utils;
 import me.matsubara.cigarette.util.PluginUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -51,8 +51,8 @@ public final class Shape {
 
         for (String ingredient : ingredients) {
             if (Strings.isNullOrEmpty(ingredient) || ingredient.equalsIgnoreCase("none")) continue;
-            String[] split = Lang3Utils.split(Lang3Utils.deleteWhitespace(ingredient), ',');
-            if (split.length == 0) split = Lang3Utils.split(ingredient, ' ');
+            String[] split = StringUtils.split(StringUtils.deleteWhitespace(ingredient), ',');
+            if (split.length == 0) split = StringUtils.split(ingredient, ' ');
 
             Material type = Material.valueOf(split[0]);
 

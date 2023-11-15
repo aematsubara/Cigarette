@@ -1,7 +1,7 @@
 # Available settings:
 # # craft > if the cigarette can be crafted.
 # # duration > the duration of the cigarette; when time is up, it breaks (only for non-virtual).
-# # material > the material of the item used for the cigarette (TORCH/REDSTONE_TORCH).
+# # material > the material of the item used for the cigarette (TORCH/REDSTONE_TORCH/{TYPE}_HOE).
 # # model-data > the custom model data id, used for custom resource packs.
 # # display_name & lore > self-explanatory.
 # # effects > the effects that'll be applied to the player. Format: EFFECT_TYPE, DURATION, AMPLIFIER (0 -> level 1).
@@ -9,6 +9,10 @@
 # # crafting.ingredients > the ingredients that'll be used for the recipe. Format: MATERIAL_NAME, KEY (used for shape, see below).
 # # crafting.shape > the shape that'll be used on the crafting table, using the KEY specified (only 3 lines required, spaces are used as AIR).
 # # particles > the particle that'll be used when smoking. Format: PARTICLE_NAME, AMOUNT, rX, rY, rZ, SPEED (r = random offset).
+# # requires-lighting > whether a flint and steel is required to light the cigarette. If true, you must click on the cigarette with the flint and steel in the cursor.
+# # second-hand-smoke > whether when smoking, nearby players also receive the effects of the cigarette.
+# # sounds.light/extinguish/smoke > define a different sound than the default one.
+# # small > whether the cigarette is small.
 #
 # In this example, the required ingredients are 6 of PAPER (3 in horizontal left and right) and 3 (3 in horizontal center) of GUNPOWDER.
 # You can use spaces to represent AIR (nothing).
@@ -26,10 +30,11 @@
 cigarettes:
   marlboro:
     craft: true
-    duration: 30
+    duration: 15
     material: TORCH
     model-data: 123
     display-name: "&c&lMARLBORO"
+    requires-lighting: true
     lore:
       - "&7Smoking kills."
     effects: []
@@ -43,15 +48,14 @@ cigarettes:
         - PGP
         - PGP
     particles: SMOKE_NORMAL, 5, 0.1, 0.1, 0.1, 0.001
-  cannabis:
+  weed:
     craft: true
-    duration: 60
+    duration: 15
     material: REDSTONE_TORCH
     model-data: 124
-    display-name: "&a&lCANNABIS"
-    lore:
-      - "&7&oI'd like to fly, but my wings"
-      - "&7&ohave been so denied..."
+    display-name: "&a&lWEED"
+    requires-lighting: true
+    second-hand-smoke: true
     effects:
       - CONFUSION, 60, 0
     crafting:
@@ -59,5 +63,28 @@ cigarettes:
       ingredients:
         - PAPER
         - GUNPOWDER
-      shape: []
+      shape: [ ]
     particles: SMOKE_LARGE, 5, 0.1, 0.1, 0.1, 0.005
+  classic-pipe:
+    duration: 15
+    material: WOODEN_HOE
+    model-data: 125
+    display-name: "&d&lClassic Pipe"
+    requires-lighting: true
+    particles: CAMPFIRE_COSY_SMOKE, 3, 0.05, 0.05, 0.05, 0.005
+    sounds:
+      light: ITEM_FIRECHARGE_USE, 1.0, 1.0
+      extinguish: BLOCK_LAVA_EXTINGUISH, 1.0, 1.0
+      smoke: BLOCK_LAVA_AMBIENT, 1.0, 1.0
+  golden-pipe:
+    duration: 30
+    material: GOLDEN_HOE
+    model-data: 126
+    display-name: "&6&lGolden Pipe"
+    requires-lighting: true
+    small: true
+    particles: CAMPFIRE_COSY_SMOKE, 3, 0.05, 0.05, 0.05, 0.005
+    sounds:
+      light: ITEM_FIRECHARGE_USE, 1.0, 1.0
+      extinguish: BLOCK_LAVA_EXTINGUISH, 1.0, 1.0
+      smoke: BLOCK_LAVA_AMBIENT, 1.0, 1.0

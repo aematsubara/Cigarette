@@ -8,6 +8,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
 public final class PlayerInteract implements Listener {
@@ -26,34 +27,29 @@ public final class PlayerInteract implements Listener {
         if (item == null) return;
         if (item.getItemMeta() == null) return;
 
-        CigaretteType cigaretteType = null;
-
-        for (CigaretteType type : plugin.getCigaretteTypes().getTypes()) {
-            if (item.isSimilar(type.getItem())) {
-                cigaretteType = type;
-                break;
-            }
+        // Only with main-hand, to prevent dupes.
+        if (event.getHand() != EquipmentSlot.HAND) {
+            event.setCancelled(true);
+            return;
         }
 
+        CigaretteType cigaretteType = plugin.getTypeByItem(item);
         if (cigaretteType == null) return;
 
-        if (plugin.isSmoking(player)) {
-            Cigarette ciggy = plugin.getCigarette(player);
-            if (ciggy == null) return;
-
-            ciggy.extinguish();
-
-            player.sendMessage(plugin.getString("messages.extinguish"));
+        if (cigaretteType.isRequiresLightning() && !player.hasPermission("cigarette.bypass.requireslightning")) {
+            player.sendMessage(plugin.getString(CigarettePlugin.MSG_REQUIRES_LIGHTNING));
+            return;
         }
 
-        new Cigarette(plugin, player, item, cigaretteType);
-        player.sendMessage(plugin.getString("messages.light"));
+        plugin.extinguishIfNecessary(player);
 
-        if (item.getAmount() > 1) {
-            item.setAmount(item.getAmount() - 1);
-        } else {
-            player.getInventory().removeItem(item);
-        }
+        new Cigarette(plugin, player, cigaretteType);
+        player.sendMessage(plugin.getString(CigarettePlugin.MSG_LIGHT));
+
+        ItemStack toRemove = item.clone();
+        toRemove.setAmount(1);
+
+        player.getInventory().removeItem(toRemove);
 
         event.setCancelled(true);
     }

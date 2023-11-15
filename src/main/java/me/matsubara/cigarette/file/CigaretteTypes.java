@@ -1,12 +1,14 @@
 package me.matsubara.cigarette.file;
 
 import com.google.common.base.Enums;
+import lombok.Getter;
 import me.matsubara.cigarette.CigarettePlugin;
 import me.matsubara.cigarette.cigarette.CigaretteType;
+import me.matsubara.cigarette.cigarette.MaterialType;
 import me.matsubara.cigarette.data.Shape;
 import me.matsubara.cigarette.data.Smoke;
-import me.matsubara.cigarette.util.Lang3Utils;
 import me.matsubara.cigarette.util.PluginUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -17,6 +19,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,6 +28,7 @@ import java.util.List;
 import java.util.Set;
 
 @SuppressWarnings("unused")
+@Getter
 public final class CigaretteTypes {
 
     private final CigarettePlugin plugin;
@@ -61,23 +65,33 @@ public final class CigaretteTypes {
 
         types.clear();
 
-        ConfigurationSection section = getConfig().getConfigurationSection("cigarettes");
+        ConfigurationSection section = configuration.getConfigurationSection("cigarettes");
         if (section == null) return;
 
         for (String path : section.getKeys(false)) {
             boolean craft = configuration.getBoolean("cigarettes." + path + ".craft");
-            String displayName = PluginUtils.translate(configuration.getString("cigarettes." + path + ".display-name"));
+
+            String tempDisName = configuration.getString("cigarettes." + path + ".display-name");
+            String displayName = tempDisName != null ? PluginUtils.translate(tempDisName) : null;
+
             List<String> lore = PluginUtils.translate(configuration.getStringList("cigarettes." + path + ".lore"));
 
             int duration = configuration.getInt("cigarettes." + path + ".duration");
 
-            String material = configuration.getString("cigarettes." + path + ".material");
-            ItemStack item = new ItemStack(Material.valueOf(material.toUpperCase()));
+            String materialString = configuration.getString("cigarettes." + path + ".material", "TORCH");
+            Material material;
+            try {
+                material = Material.valueOf(materialString.toUpperCase());
+            } catch (IllegalStateException exception) {
+                plugin.getLogger().warning("Invalid material type! {" + materialString + "}");
+                continue;
+            }
+            ItemStack item = new ItemStack(material);
 
             ItemMeta meta = item.getItemMeta();
             if (meta == null) continue;
 
-            meta.setDisplayName(displayName);
+            if (displayName != null) meta.setDisplayName(displayName);
             meta.setLore(lore);
 
             int modelData = configuration.getInt("cigarettes." + path + ".model-data", Integer.MIN_VALUE);
@@ -87,28 +101,46 @@ public final class CigaretteTypes {
 
             List<String> effects = configuration.getStringList("cigarettes." + path + ".effects");
 
-            Shape shape = null;
+            Shape shape;
             if (craft) {
                 boolean shaped = configuration.getBoolean("cigarettes." + path + ".crafting.shaped");
                 List<String> ingredients = configuration.getStringList("cigarettes." + path + ".crafting.ingredients");
                 List<String> shapeList = configuration.getStringList("cigarettes." + path + ".crafting.shape");
-
                 shape = new Shape(plugin, path, shaped, ingredients, shapeList, item);
-            }
+            } else shape = null;
 
             Smoke smoke = getSmoke(path);
 
-            CigaretteType type = new CigaretteType(path, duration, item, effects, shape, smoke);
-            types.add(type);
+            String lightSound = configuration.getString("cigarettes." + path + ".sounds.light", plugin.getConfig().getString("sounds.light"));
+            String extinguishSound = configuration.getString("cigarettes." + path + ".sounds.extinguish", plugin.getConfig().getString("sounds.extinguish"));
+            String smokeSound = configuration.getString("cigarettes." + path + ".sounds.smoke", plugin.getConfig().getString("sounds.smoke"));
+
+            boolean secondHandSmoke = configuration.getBoolean("cigarettes." + path + ".second-hand-smoke");
+            boolean requiresLightning = configuration.getBoolean("cigarettes." + path + ".requires-lighting");
+            boolean isSmall = configuration.getBoolean("cigarettes." + path + ".small");
+
+            types.add(new CigaretteType(
+                    path,
+                    MaterialType.getByMaterial(material, isSmall),
+                    duration,
+                    item,
+                    effects,
+                    shape,
+                    smoke,
+                    lightSound,
+                    extinguishSound,
+                    smokeSound,
+                    secondHandSmoke,
+                    requiresLightning));
         }
     }
 
-    private Smoke getSmoke(String path) {
+    private @Nullable Smoke getSmoke(String path) {
         String particleString = configuration.getString("cigarettes." + path + ".particles");
 
         if (particleString == null || particleString.isEmpty() || particleString.equalsIgnoreCase("none")) return null;
-        String[] split = Lang3Utils.split(Lang3Utils.deleteWhitespace(particleString), ',');
-        if (split.length == 0) split = Lang3Utils.split(particleString, ' ');
+        String[] split = StringUtils.split(StringUtils.deleteWhitespace(particleString), ',');
+        if (split.length == 0) split = StringUtils.split(particleString, ' ');
 
         Particle particle = Enums.getIfPresent(Particle.class, split[0]).orNull();
         if (particle == null) return null;
@@ -136,18 +168,10 @@ public final class CigaretteTypes {
         }
     }
 
-    public CigaretteType getTypeByName(String name) {
+    public @Nullable CigaretteType getTypeByName(String name) {
         for (CigaretteType type : types) {
             if (type.getName().equalsIgnoreCase(name)) return type;
         }
         return null;
-    }
-
-    public Set<CigaretteType> getTypes() {
-        return types;
-    }
-
-    public FileConfiguration getConfig() {
-        return configuration;
     }
 }
