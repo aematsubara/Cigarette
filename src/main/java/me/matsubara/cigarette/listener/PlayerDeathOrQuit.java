@@ -5,6 +5,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.jetbrains.annotations.NotNull;
 
 public final class PlayerDeathOrQuit implements Listener {
 
@@ -15,12 +16,12 @@ public final class PlayerDeathOrQuit implements Listener {
     }
 
     @EventHandler
-    public void onPlayerDeath(PlayerDeathEvent event) {
-        plugin.extinguishIfNecessary(event.getEntity());
+    public void onPlayerDeath(@NotNull PlayerDeathEvent event) {
+        plugin.extinguishIfPossible(event.getEntity());
     }
 
     @EventHandler
-    public void onPlayerQuit(PlayerQuitEvent event) {
-        plugin.extinguishIfNecessary(event.getPlayer());
+    public void onPlayerQuit(@NotNull PlayerQuitEvent event) {
+        plugin.extinguishIfPossible(event.getPlayer());
     }
 }

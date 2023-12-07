@@ -10,12 +10,15 @@ sounds:
   extinguish: "BLOCK_LAVA_EXTINGUISH, 1.0, 1.0"
   smoke: "BLOCK_FIRE_AMBIENT, 1.0, 1.0"
 
+# If true, existing cigarettes prior to version 2.0.1 won't work, as they don't have a cigarette identifier.
+# If false, these cigarettes can be used, but players allowed to change the name and lore of an item can replicate cigarettes and use them.
+invalidate-old-cigarettes: false
+
 messages:
-  not-from-console: "&cThis command can't be used from the console!"
   no-permission: "&cYou don't have permission to execute this command."
   player-not-found: "&cPlayer not found!"
   requires-lightning: "&cThis cigarette must be lit with a flint and steel or a fire charge!"
-  usage: "&aUsage: /cigarette reload or /cigarette give [name] <player>"
+  invalid-amount: "&cChoose an amount between 1 and 64."
   reloading: "&aThe plugin is being reloaded in another thread, wait a few seconds..."
   reload: "&aPlugin reloaded!"
   unknown: "&cThat cigarette doesn't exists."

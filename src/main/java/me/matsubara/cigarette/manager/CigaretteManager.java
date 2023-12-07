@@ -1,8 +1,9 @@
-package me.matsubara.cigarette.file;
+package me.matsubara.cigarette.manager;
 
 import com.google.common.base.Enums;
 import lombok.Getter;
 import me.matsubara.cigarette.CigarettePlugin;
+import me.matsubara.cigarette.cigarette.Cigarette;
 import me.matsubara.cigarette.cigarette.CigaretteType;
 import me.matsubara.cigarette.cigarette.MaterialType;
 import me.matsubara.cigarette.data.Shape;
@@ -19,6 +20,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -29,17 +31,17 @@ import java.util.Set;
 
 @SuppressWarnings("unused")
 @Getter
-public final class CigaretteTypes {
+public final class CigaretteManager {
 
     private final CigarettePlugin plugin;
-    private final Set<CigaretteType> types;
+    private final Set<CigaretteType> types = new HashSet<>();
+    private final Set<Cigarette> cigarettes = new HashSet<>();
 
     private File file;
     private FileConfiguration configuration;
 
-    public CigaretteTypes(CigarettePlugin plugin) {
+    public CigaretteManager(CigarettePlugin plugin) {
         this.plugin = plugin;
-        this.types = new HashSet<>();
         load();
     }
 
@@ -96,6 +98,9 @@ public final class CigaretteTypes {
 
             int modelData = configuration.getInt("cigarettes." + path + ".model-data", Integer.MIN_VALUE);
             if (modelData != Integer.MIN_VALUE) meta.setCustomModelData(modelData);
+
+            // Save name of the cigarrete to identify the type.
+            meta.getPersistentDataContainer().set(plugin.getIdentifier(), PersistentDataType.STRING, path);
 
             item.setItemMeta(meta);
 

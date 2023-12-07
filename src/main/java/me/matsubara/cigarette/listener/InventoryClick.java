@@ -3,6 +3,7 @@ package me.matsubara.cigarette.listener;
 import me.matsubara.cigarette.CigarettePlugin;
 import me.matsubara.cigarette.cigarette.Cigarette;
 import me.matsubara.cigarette.cigarette.CigaretteType;
+import me.matsubara.cigarette.command.MainCommand;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -10,6 +11,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
+import org.jetbrains.annotations.NotNull;
 
 public final class InventoryClick implements Listener {
 
@@ -21,7 +23,7 @@ public final class InventoryClick implements Listener {
 
     @SuppressWarnings("deprecation")
     @EventHandler
-    public void onInventoryClick(InventoryClickEvent event) {
+    public void onInventoryClick(@NotNull InventoryClickEvent event) {
         Player player = (Player) event.getWhoClicked();
 
         ItemStack cursor = event.getCursor();
@@ -31,8 +33,8 @@ public final class InventoryClick implements Listener {
         ItemStack current = event.getCurrentItem();
         if (current == null) return;
 
-        CigaretteType cigaretteType = plugin.getTypeByItem(current);
-        if (cigaretteType == null) return;
+        CigaretteType type = plugin.getTypeByItem(current);
+        if (type == null) return;
 
         event.setCancelled(true);
 
@@ -60,9 +62,9 @@ public final class InventoryClick implements Listener {
             }
         }
 
-        plugin.extinguishIfNecessary(player);
+        plugin.extinguishIfPossible(player);
 
-        new Cigarette(plugin, player, cigaretteType);
-        player.sendMessage(plugin.getString(CigarettePlugin.MSG_LIGHT));
+        new Cigarette(plugin, player, type);
+        player.sendMessage(plugin.getString(MainCommand.MSG_LIGHT));
     }
 }

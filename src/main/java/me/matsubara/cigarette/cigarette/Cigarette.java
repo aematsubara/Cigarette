@@ -3,6 +3,7 @@ package me.matsubara.cigarette.cigarette;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import me.matsubara.cigarette.CigarettePlugin;
+import me.matsubara.cigarette.command.MainCommand;
 import me.matsubara.cigarette.util.PluginUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bukkit.Location;
@@ -12,6 +13,7 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EntityEquipment;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
@@ -54,14 +56,14 @@ public final class Cigarette extends BukkitRunnable {
         this.taskId = runTaskTimer(plugin, 0L, 1L).getTaskId();
 
         this.secondHandSmoke = new HashMap<>();
-        plugin.getCigarettes().add(this);
+        plugin.getCigaretteManager().getCigarettes().add(this);
     }
 
     @Override
     public void run() {
         // Extinguish if time is over.
         if (count / 20 == type.getDuration()) {
-            owner.sendMessage(plugin.getString(CigarettePlugin.MSG_EXTINGUISH));
+            owner.sendMessage(plugin.getString(MainCommand.MSG_EXTINGUISH));
             extinguish();
             cancel();
         }
@@ -117,7 +119,7 @@ public final class Cigarette extends BukkitRunnable {
     public void extinguish() {
         playSound(stand.getLocation(), type.getExtinguishSound());
         stand.remove();
-        plugin.getCigarettes().remove(this);
+        plugin.getCigaretteManager().getCigarettes().remove(this);
 
         if (taskId != -1) plugin.getServer().getScheduler().cancelTask(taskId);
 
@@ -172,5 +174,11 @@ public final class Cigarette extends BukkitRunnable {
         stand.setSilent(true);
         stand.setRightArmPose(type.getMaterialType().getAngle());
         stand.setSmall(type.getMaterialType().isSmall());
+        // Lock all slots.
+        for (EquipmentSlot slot : EquipmentSlot.values()) {
+            for (ArmorStand.LockType type : ArmorStand.LockType.values()) {
+                stand.addEquipmentLock(slot, type);
+            }
+        }
     }
 }

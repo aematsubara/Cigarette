@@ -7,6 +7,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
+import org.jetbrains.annotations.NotNull;
 
 public final class PlayerItemConsume implements Listener {
 
@@ -17,10 +18,10 @@ public final class PlayerItemConsume implements Listener {
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onPlayerItemConsume(PlayerItemConsumeEvent event) {
+    public void onPlayerItemConsume(@NotNull PlayerItemConsumeEvent event) {
         if (event.getItem().getType() != Material.MILK_BUCKET) return;
 
         Player player = event.getPlayer();
-        if (plugin.getConfig().getBoolean("remove-when-drinking-milk")) plugin.extinguishIfNecessary(player);
+        if (plugin.getConfig().getBoolean("remove-when-drinking-milk")) plugin.extinguishIfPossible(player);
     }
 }
