@@ -30,7 +30,7 @@ Those features are in the latest version of the plugin.
 
 **IMAGES**  
 If you got images of this plugin on your server, send them to me.  
-![cigi2.png](https://www.spigotmc.org/attachments/cigi2-png.800618/)  
+![vfWwnck.png](https://i.imgur.com/vfWwnck.png)  
 
   
 **FILES**  
