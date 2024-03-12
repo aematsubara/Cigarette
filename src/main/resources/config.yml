@@ -14,6 +14,7 @@ sounds:
 # If false, these cigarettes can be used, but players allowed to change the name and lore of an item can replicate cigarettes and use them.
 invalidate-old-cigarettes: false
 
+#English 
 messages:
   no-permission: "&cYou don't have permission to execute this command."
   player-not-found: "&cPlayer not found!"
@@ -25,7 +26,7 @@ messages:
   extinguish: "&aYour cigarette is over."
   light: "&aCiggy lighted!"
   
-# German Translation
+#German
 #messages:
 #no-permission: "&cDu hast keine Berechtigung, diesen Befehl auszuführen."
 #player-not-found: "&cSpieler nicht gefunden!"
@@ -34,6 +35,5 @@ messages:
 #reloading: "&aDas Plugin wird in einem anderen Thread neu geladen, bitte warte einige Sekunden..."
 #reload: "&aPlugin neu geladen!"
 #unknown: "&cDiese Zigarette existiert nicht."
-#extinguish: "&aDeine Zigarette ist ausgegangen."
+#extinguish: "&aDu hast die Zigarette zu ende geraucht"
 #light: "&aZigarette angezündet!"
-#
