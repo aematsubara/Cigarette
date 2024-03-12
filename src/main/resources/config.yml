@@ -24,3 +24,16 @@ messages:
   unknown: "&cThat cigarette doesn't exists."
   extinguish: "&aYour cigarette is over."
   light: "&aCiggy lighted!"
+  
+# German Translation
+#messages:
+#no-permission: "&cDu hast keine Berechtigung, diesen Befehl auszuführen."
+#player-not-found: "&cSpieler nicht gefunden!"
+#requires-lightning: "&cDiese Zigarette muss mit einem Feuerzeug oder einem Feuerball angezündet werden!"
+#invalid-amount: "&cWähle eine Menge zwischen 1 und 64."
+#reloading: "&aDas Plugin wird in einem anderen Thread neu geladen, bitte warte einige Sekunden..."
+#reload: "&aPlugin neu geladen!"
+#unknown: "&cDiese Zigarette existiert nicht."
+#extinguish: "&aDeine Zigarette ist ausgegangen."
+#light: "&aZigarette angezündet!"
+#
