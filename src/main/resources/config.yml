@@ -1,7 +1,10 @@
 # Don't touch this!
 config-version: 1
 
-# If true, when drinking milk the cigarette will be extinguished.
+# The rendering distance of the cigarettes.
+render-distance: 80
+
+# If true, when drinking milk, the cigarette will be extinguished.
 remove-when-drinking-milk: true
 
 # Default sounds, used when a custom cigarette doesn't have custom sounds.

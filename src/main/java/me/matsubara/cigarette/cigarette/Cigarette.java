@@ -5,15 +5,15 @@ import lombok.Getter;
 import me.matsubara.cigarette.CigarettePlugin;
 import me.matsubara.cigarette.command.MainCommand;
 import me.matsubara.cigarette.util.PluginUtils;
+import me.matsubara.cigarette.util.stand.PacketStand;
+import me.matsubara.cigarette.util.stand.StandSettings;
 import org.apache.commons.lang3.StringUtils;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
-import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.EntityEquipment;
-import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
@@ -30,8 +30,7 @@ public final class Cigarette extends BukkitRunnable {
 
     private final Player owner;
     private final CigaretteType type;
-    private final ArmorStand stand;
-    private final UUID standId;
+    private final PacketStand stand;
     private final int taskId;
     private final Map<UUID, Long> secondHandSmoke;
     private int count = 0;
@@ -41,12 +40,11 @@ public final class Cigarette extends BukkitRunnable {
         this.owner = owner;
         this.type = type;
 
-        // Copy location from player and add an offset.
+        // Copy location from the player and add an offset.
         Location location = owner.getLocation().clone();
         location.add(PluginUtils.offsetVector(type.getMaterialType().getOffset(), location.getYaw(), location.getPitch()));
-        this.stand = owner.getWorld().spawn(location.add(getHeight()), ArmorStand.class, this::init);
 
-        this.standId = stand.getUniqueId();
+        this.stand = new PacketStand(location.add(getHeight()), createSetttings(), true, plugin.getConfig().getInt("render-distance"));
 
         // Play lit sound.
         playSound(stand.getLocation(), type.getLightSound());
@@ -118,7 +116,7 @@ public final class Cigarette extends BukkitRunnable {
 
     public void extinguish() {
         playSound(stand.getLocation(), type.getExtinguishSound());
-        stand.remove();
+        stand.destroy();
         plugin.getCigaretteManager().getCigarettes().remove(this);
 
         if (taskId != -1) plugin.getServer().getScheduler().cancelTask(taskId);
@@ -153,32 +151,26 @@ public final class Cigarette extends BukkitRunnable {
     }
 
     public boolean isVisible() {
-        // If somehow the equipment is null, then the stand is invisible.
-        if (stand.getEquipment() == null) return false;
-        return stand.getEquipment().getItemInMainHand().getType() != Material.AIR;
+        if (!stand.getSettings().hasEquipment()) return false;
+
+
+        ItemStack handItem = stand.getSettings().getEquipment().get(PacketStand.ItemSlot.MAINHAND);
+        return handItem != null && handItem.getType() != Material.AIR;
     }
 
     public void show(boolean show) {
-        EntityEquipment equipment = stand.getEquipment();
-        if (equipment != null) equipment.setItemInMainHand(show ? type.getItem() : null);
+        stand.setEquipment(show ? type.getItem() : new ItemStack(Material.AIR), PacketStand.ItemSlot.MAINHAND);
     }
 
-    private void init(@NotNull ArmorStand stand) {
-        stand.setAI(false);
-        stand.setArms(false);
-        stand.setBasePlate(false);
-        stand.setCollidable(false);
-        stand.setGravity(false);
-        stand.setPersistent(false);
-        stand.setVisible(false);
-        stand.setSilent(true);
-        stand.setRightArmPose(type.getMaterialType().getAngle());
-        stand.setSmall(type.getMaterialType().isSmall());
-        // Lock all slots.
-        for (EquipmentSlot slot : EquipmentSlot.values()) {
-            for (ArmorStand.LockType type : ArmorStand.LockType.values()) {
-                stand.addEquipmentLock(slot, type);
-            }
-        }
+    private @NotNull StandSettings createSetttings() {
+        StandSettings settings = new StandSettings();
+
+        settings.setArms(false);
+        settings.setBasePlate(false);
+        settings.setInvisible(true);
+        settings.setRightArmPose(type.getMaterialType().getAngle());
+        settings.setSmall(type.getMaterialType().isSmall());
+
+        return settings;
     }
 }

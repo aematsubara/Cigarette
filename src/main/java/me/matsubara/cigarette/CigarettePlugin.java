@@ -11,6 +11,7 @@ import me.matsubara.cigarette.listener.PlayerDeathOrQuit;
 import me.matsubara.cigarette.listener.PlayerInteract;
 import me.matsubara.cigarette.listener.PlayerItemConsume;
 import me.matsubara.cigarette.manager.CigaretteManager;
+import me.matsubara.cigarette.manager.StandManager;
 import me.matsubara.cigarette.util.PluginUtils;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.PluginCommand;
@@ -38,6 +39,8 @@ import java.util.function.Predicate;
 public final class CigarettePlugin extends JavaPlugin {
 
     private CigaretteManager cigaretteManager;
+    private StandManager standManager;
+
     private final NamespacedKey identifier = new NamespacedKey(this, "cigarette-type");
 
     private static final List<String> SPECIAL_SECTIONS = Collections.emptyList();
@@ -52,6 +55,7 @@ public final class CigarettePlugin extends JavaPlugin {
         }
 
         cigaretteManager = new CigaretteManager(this);
+        standManager = new StandManager(this);
 
         manager.registerEvents(new InventoryClick(this), this);
         manager.registerEvents(new PlayerDeathOrQuit(this), this);
