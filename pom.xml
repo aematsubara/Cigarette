@@ -64,8 +64,6 @@
                                     <artifact>com.github.cryptomorin:XSeries</artifact>
                                     <includes>
                                         <include>com/cryptomorin/xseries/ReflectionUtils*</include>
-                                        <include>com/cryptomorin/xseries/particles/XParticle*</include>
-                                        <include>com/cryptomorin/xseries/particles/ParticleDisplay*</include>
                                     </includes>
                                 </filter>
                             </filters>

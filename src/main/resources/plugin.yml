@@ -1,7 +1,7 @@
 name: Cigarette
 version: ${project.version}
 main: me.matsubara.cigarette.CigarettePlugin
-api-version: 1.13
+api-version: 1.17
 author: Matsubara
 description: ${project.description}
 
