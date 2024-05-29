@@ -4,6 +4,9 @@ main: me.matsubara.cigarette.CigarettePlugin
 api-version: 1.17
 author: Matsubara
 description: ${project.description}
+libraries:
+  - org.apache.commons:commons-lang3:3.14.0
+  - commons-io:commons-io:2.15.1
 
 commands:
   cigarette:

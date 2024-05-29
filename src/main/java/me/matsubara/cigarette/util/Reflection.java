@@ -12,9 +12,19 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+@SuppressWarnings("unused")
 public final class Reflection {
 
     private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
+
+    public static @Nullable Object getFieldValue(MethodHandle handle) {
+        try {
+            return handle.invoke();
+        } catch (Throwable throwable) {
+            throwable.printStackTrace();
+            return null;
+        }
+    }
 
     public static MethodHandle getFieldGetter(Class<?> clazz, String name) {
         return getField(clazz, name, true);
@@ -24,7 +34,7 @@ public final class Reflection {
         return getField(clazz, name, false);
     }
 
-    private static @Nullable MethodHandle getField(@NotNull Class<?> clazz, String name, boolean isGetter) {
+    public static @Nullable MethodHandle getField(@NotNull Class<?> clazz, String name, boolean isGetter) {
         try {
             Field field = clazz.getDeclaredField(name);
             field.setAccessible(true);
@@ -37,25 +47,24 @@ public final class Reflection {
         }
     }
 
-    public static @Nullable Object getFieldValue(MethodHandle handle) {
+    public static @Nullable MethodHandle getConstructor(@NotNull Class<?> clazz, Class<?>... parameterTypes) {
         try {
-            return handle.invoke();
-        } catch (Throwable throwable) {
+            Constructor<?> constructor = clazz.getDeclaredConstructor(parameterTypes);
+            constructor.setAccessible(true);
+
+            return LOOKUP.unreflectConstructor(constructor);
+        } catch (ReflectiveOperationException exception) {
+            exception.printStackTrace();
             return null;
         }
     }
 
-    public static MethodHandle getConstructor(Class<?> refc, Class<?>... types) {
-        return getConstructor(refc, true, types);
-    }
-
-    public static @Nullable MethodHandle getConstructor(@NotNull Class<?> refc, boolean printStackTrace, Class<?>... types) {
+    public static @Nullable MethodHandle getPrivateConstructor(Class<?> clazz, Class<?>... parameterTypes) {
         try {
-            Constructor<?> constructor = refc.getDeclaredConstructor(types);
-            constructor.setAccessible(true);
-            return LOOKUP.unreflectConstructor(constructor);
-        } catch (ReflectiveOperationException exception) {
-            if (printStackTrace) exception.printStackTrace();
+            return MethodHandles.privateLookupIn(clazz, LOOKUP)
+                    .findConstructor(clazz, MethodType.methodType(void.class, parameterTypes));
+        } catch (Throwable throwable) {
+            throwable.printStackTrace();
             return null;
         }
     }
@@ -110,8 +119,67 @@ public final class Reflection {
         try {
             return Class.forName(name);
         } catch (ClassNotFoundException exception) {
-            exception.printStackTrace();
             return null;
         }
+    }
+
+    public static @Nullable MethodHandle getField(Class<?> refc, Class<?> instc, String name, boolean isGetter, String... extraNames) {
+        try {
+            Field temp = getFieldHandleRaw(refc, instc, name);
+            MethodHandle handle = temp != null ? (isGetter ? LOOKUP.unreflectGetter(temp) : LOOKUP.unreflectSetter(temp)) : null;
+
+            if (handle != null) return handle;
+
+            if (extraNames != null && extraNames.length > 0) {
+                if (extraNames.length == 1) return getField(refc, instc, extraNames[0], isGetter);
+                return getField(refc, instc, extraNames[0], isGetter, removeFirst(extraNames));
+            }
+        } catch (IllegalAccessException exception) {
+            exception.printStackTrace();
+        }
+
+        return null;
+    }
+
+    private static @NotNull String[] removeFirst(@NotNull String[] array) {
+        int length = array.length;
+
+        String[] result = new String[length - 1];
+        System.arraycopy(array, 1, result, 0, length - 1);
+
+        return result;
+    }
+
+    public static @Nullable Field getFieldRaw(Class<?> refc, Class<?> instc, String name, String... extraNames) {
+        Field handle = getFieldHandleRaw(refc, instc, name);
+        if (handle != null) return handle;
+
+        if (extraNames != null && extraNames.length > 0) {
+            if (extraNames.length == 1) return getFieldRaw(refc, instc, extraNames[0]);
+            return getFieldRaw(refc, instc, extraNames[0], removeFirst(extraNames));
+        }
+
+        return null;
+    }
+
+    private static @Nullable Field getFieldHandleRaw(@NotNull Class<?> refc, Class<?> inscofc, String name) {
+        for (Field field : refc.getDeclaredFields()) {
+            field.setAccessible(true);
+
+            if (!field.getName().equalsIgnoreCase(name)) continue;
+
+            if (field.getType().isInstance(inscofc) || field.getType().isAssignableFrom(inscofc)) {
+                return field;
+            }
+        }
+        return null;
+    }
+
+    @SuppressWarnings("UnstableApiUsage")
+    public static Class<?> getNMSClass(String packageName, String mojangName, String spigotName) {
+        return ReflectionUtils.ofMinecraft()
+                .inPackage(ReflectionUtils.MinecraftPackage.NMS, packageName)
+                .map(ReflectionUtils.MinecraftMapping.MOJANG, mojangName)
+                .map(ReflectionUtils.MinecraftMapping.SPIGOT, spigotName).unreflect();
     }
 }

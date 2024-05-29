@@ -6,7 +6,7 @@
 
     <groupId>me.matsubara</groupId>
     <artifactId>Cigarette</artifactId>
-    <version>2.0.2</version>
+    <version>2.0.3</version>
     <packaging>jar</packaging>
 
     <name>Cigarette</name>
@@ -38,7 +38,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.3.1-SNAPSHOT</version>
+                <version>3.5.4-SNAPSHOT</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -50,6 +50,10 @@
                             <relocations>
                                 <relocation>
                                     <pattern>com.tchristofferson</pattern>
+                                    <shadedPattern>me.matsubara.cigarette.util</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>com.cryptomorin</pattern>
                                     <shadedPattern>me.matsubara.cigarette.util</shadedPattern>
                                 </relocation>
                             </relocations>
@@ -107,7 +111,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.28</version>
+            <version>1.18.30</version>
             <scope>provided</scope>
         </dependency>
         <!-- ConfigUpdater -->
@@ -120,35 +124,35 @@
         <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
-            <version>24.0.1</version>
+            <version>24.1.0</version>
             <scope>provided</scope>
         </dependency>
         <!--  commons-lang3  -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.13.0</version>
+            <version>3.14.0</version>
             <scope>provided</scope>
         </dependency>
         <!--  commons-io  -->
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.13.0</version>
+            <version>2.15.1</version>
             <scope>provided</scope>
         </dependency>
         <!-- XSeries -->
         <dependency>
             <groupId>com.github.cryptomorin</groupId>
             <artifactId>XSeries</artifactId>
-            <version>9.10.0</version>
+            <version>10.0.0</version>
         </dependency>
         <!-- netty -->
         <!--suppress VulnerableLibrariesLocal -->
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
-            <version>4.1.68.Final</version>
+            <version>4.1.86.Final</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

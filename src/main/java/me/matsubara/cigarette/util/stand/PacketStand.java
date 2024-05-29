@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -91,6 +90,12 @@ public final class PacketStand {
     private static final Class<?> DATA_WATCHER_REGISTRY;
     private static final Class<?> ENTITY_TYPES;
     private static final Class<?> VEC_3D;
+    private static final Class<?> STREAM_ENCODER;
+    private static final Class<?> REGISTRY_FRIENDLY_BYTE_BUF;
+    private static final Class<?> REGISTRY_ACCESS;
+    private static final Class<?> IMMUTABLE_REGISTRY_ACCESS;
+    private static final Class<?> BUILT_IN_REGISTRIES;
+    private static final Class<?> DEFAULTED_REGISTRY;
 
     // Methods.
     private static final MethodHandle asNMSCopy;
@@ -109,6 +114,8 @@ public final class PacketStand {
     private static final MethodHandle getTypeId;
     private static final MethodHandle serialize;
     private static final MethodHandle byString;
+    private static final MethodHandle codec;
+    private static final MethodHandle encode;
 
     // Constructors.
     private static final MethodHandle packetSpawnEntityLiving;
@@ -120,6 +127,8 @@ public final class PacketStand {
     private static final MethodHandle packetDataSerializer;
     private static final MethodHandle packetEntityMetadata;
     private static final MethodHandle dataWatcherItem;
+    private static final MethodHandle registryFriendlyByteBuf;
+    private static final MethodHandle immutableRegistryAccess;
 
     // Fields.
     private static final Object DWO_ENTITY_DATA;
@@ -135,6 +144,8 @@ public final class PacketStand {
     private static final Object ZERO;
     private static final Object ARMOR_STAND;
     private static final int ENTITY_TYPE_ID;
+    private static final Object ITEM;
+    private static final Object DATA_COMPONENT_TYPE;
     private static final AtomicInteger ENTITY_COUNTER;
 
     static {
@@ -142,36 +153,44 @@ public final class PacketStand {
         CRAFT_CHAT_MESSAGE = (VERSION > 12) ? ReflectionUtils.getCraftClass("util.CraftChatMessage") : null;
         CRAFT_ITEM_STACK = ReflectionUtils.getCraftClass("inventory.CraftItemStack");
         ENTITY = ReflectionUtils.getNMSClass("world.entity", "Entity");
-        ENTITY_ARMOR_STAND = ReflectionUtils.getNMSClass("world.entity.decoration", "EntityArmorStand");
-        PACKET_SPAWN_ENTITY_LIVING = ReflectionUtils.getNMSClass(
-                "network.protocol.game",
+        ENTITY_ARMOR_STAND = Reflection.getNMSClass("world.entity.decoration", "ArmorStand", "EntityArmorStand");
+        PACKET_SPAWN_ENTITY_LIVING = Reflection.getNMSClass("network.protocol.game",
+                VERSION > 18 ? "ClientboundAddEntityPacket" : "ClientboundAddMobPacket",
                 VERSION > 18 ? "PacketPlayOutSpawnEntity" : "PacketPlayOutSpawnEntityLiving"); // SpawnEntityLiving is removed since 1.19.
-        PACKET_ENTITY_HEAD_ROTATION = ReflectionUtils.getNMSClass("network.protocol.game", "PacketPlayOutEntityHeadRotation");
-        PACKET_ENTITY_TELEPORT = ReflectionUtils.getNMSClass("network.protocol.game", "PacketPlayOutEntityTeleport");
-        PACKET_ENTITY_METADATA = ReflectionUtils.getNMSClass("network.protocol.game", "PacketPlayOutEntityMetadata");
-        PACKET_ENTITY_EQUIPMENT = ReflectionUtils.getNMSClass("network.protocol.game", "PacketPlayOutEntityEquipment");
-        ENUM_ITEM_SLOT = ReflectionUtils.getNMSClass("world.entity", "EnumItemSlot");
+        PACKET_ENTITY_HEAD_ROTATION = Reflection.getNMSClass("network.protocol.game", "ClientboundRotateHeadPacket", "PacketPlayOutEntityHeadRotation");
+        PACKET_ENTITY_TELEPORT = Reflection.getNMSClass("network.protocol.game", "ClientboundTeleportEntityPacket", "PacketPlayOutEntityTeleport");
+        PACKET_ENTITY_METADATA = Reflection.getNMSClass("network.protocol.game", "ClientboundSetEntityDataPacket", "PacketPlayOutEntityMetadata");
+        PACKET_ENTITY_EQUIPMENT = Reflection.getNMSClass("network.protocol.game", "ClientboundSetEquipmentPacket", "PacketPlayOutEntityEquipment");
+        ENUM_ITEM_SLOT = Reflection.getNMSClass("world.entity", "EquipmentSlot", "EnumItemSlot");
         ITEM_STACK = ReflectionUtils.getNMSClass("world.item", "ItemStack");
-        PACKET_ENTITY_DESTROY = ReflectionUtils.getNMSClass("network.protocol.game", "PacketPlayOutEntityDestroy");
+        PACKET_ENTITY_DESTROY = Reflection.getNMSClass("network.protocol.game", "ClientboundRemoveEntitiesPacket", "PacketPlayOutEntityDestroy");
         PAIR = (VERSION > 15) ? Reflection.getUnversionedClass("com.mojang.datafixers.util.Pair") : null;
         SHARED_CONSTANTS = (VERSION == 17) ? ReflectionUtils.getNMSClass("SharedConstants") : null;
         GAME_VERSION = (VERSION == 17) ? Reflection.getUnversionedClass("com.mojang.bridge.game.GameVersion") : null;
-        VECTOR3F = ReflectionUtils.getNMSClass("core", "Vector3f");
-        I_CHAT_BASE_COMPONENT = ReflectionUtils.getNMSClass("network.chat", "IChatBaseComponent");
-        PACKET_DATA_SERIALIZER = ReflectionUtils.getNMSClass("network", "PacketDataSerializer");
-        DATA_WATCHER_OBJECT = ReflectionUtils.getNMSClass("network.syncher", "DataWatcherObject");
-        DATA_WATCHER_SERIALIZER = ReflectionUtils.getNMSClass("network.syncher", "DataWatcherSerializer");
-        DATA_WATCHER_ITEM = ReflectionUtils.getNMSClass("network.syncher", "DataWatcher$Item");
-        DATA_WATCHER_REGISTRY = ReflectionUtils.getNMSClass("network.syncher", "DataWatcherRegistry");
-        ENTITY_TYPES = ReflectionUtils.getNMSClass("world.entity", "EntityTypes");
-        VEC_3D = ReflectionUtils.getNMSClass("world.phys", "Vec3D");
+        VECTOR3F = Reflection.getNMSClass("core", "Rotations", "Vector3f");
+        I_CHAT_BASE_COMPONENT = Reflection.getNMSClass("network.chat", "Component", "IChatBaseComponent");
+        PACKET_DATA_SERIALIZER = Reflection.getNMSClass("network", "FriendlyByteBuf", "PacketDataSerializer");
+        DATA_WATCHER_OBJECT = Reflection.getNMSClass("network.syncher", "EntityDataAccessor", "DataWatcherObject");
+        DATA_WATCHER_SERIALIZER = Reflection.getNMSClass("network.syncher", "EntityDataSerializer", "DataWatcherSerializer");
+        DATA_WATCHER_ITEM = Reflection.getNMSClass("network.syncher", "SynchedEntityData$DataItem", "DataWatcher$Item");
+        DATA_WATCHER_REGISTRY = Reflection.getNMSClass("network.syncher", "EntityDataSerializers", "DataWatcherRegistry");
+        ENTITY_TYPES = Reflection.getNMSClass("world.entity", "EntityType", "EntityTypes");
+        VEC_3D = Reflection.getNMSClass("world.phys", "Vec3", "Vec3D");
+        STREAM_ENCODER = ReflectionUtils.supports(20, 6) ? ReflectionUtils.getNMSClass("network.codec", "StreamEncoder") : null;
+        REGISTRY_FRIENDLY_BYTE_BUF = ReflectionUtils.supports(20, 6) ? ReflectionUtils.getNMSClass("network", "RegistryFriendlyByteBuf") : null;
+        REGISTRY_ACCESS = ReflectionUtils.supports(20, 6) ? Reflection.getNMSClass("core", "RegistryAccess", "IRegistryCustom") : null;
+        IMMUTABLE_REGISTRY_ACCESS = ReflectionUtils.supports(20, 6) ? Reflection.getNMSClass("core", "RegistryAccess$ImmutableRegistryAccess", "IRegistryCustom$c") : null;
+        BUILT_IN_REGISTRIES = ReflectionUtils.supports(20, 6) ? ReflectionUtils.getNMSClass("core.registries", "BuiltInRegistries") : null;
+        DEFAULTED_REGISTRY = ReflectionUtils.supports(20, 6) ? Reflection.getNMSClass("core", "DefaultedRegistry", "RegistryBlocks") : null;
 
         // Initialize methods.
         asNMSCopy = Reflection.getMethod(CRAFT_ITEM_STACK, "asNMSCopy", MethodType.methodType(ITEM_STACK, ItemStack.class), true, true);
         of = (PAIR == null) ? null : Reflection.getMethod(PAIR, "of", MethodType.methodType(PAIR, Object.class, Object.class), true, true);
         fromStringOrNull = (CRAFT_CHAT_MESSAGE == null) ? null : Reflection.getMethod(CRAFT_CHAT_MESSAGE, "fromStringOrNull", MethodType.methodType(I_CHAT_BASE_COMPONENT, String.class), true, true);
 
-        if (ReflectionUtils.supports(20, 2)) {
+        if (ReflectionUtils.supports(20, 6)) {
+            writeInt = Reflection.getMethod(PACKET_DATA_SERIALIZER, "c", MethodType.methodType(PACKET_DATA_SERIALIZER, int.class), "writeVarInt");
+        } else if (ReflectionUtils.supports(20, 2)) {
             writeInt = Reflection.getMethod(PACKET_DATA_SERIALIZER, "c", int.class);
         } else {
             writeInt = Reflection.getMethod(PACKET_DATA_SERIALIZER, "d", int.class);
@@ -186,8 +205,10 @@ public final class PacketStand {
         getSerializer = Reflection.getMethod(DATA_WATCHER_OBJECT, "b");
         getIndex = Reflection.getMethod(DATA_WATCHER_OBJECT, "a");
         getTypeId = Reflection.getMethod(DATA_WATCHER_REGISTRY, "b", MethodType.methodType(int.class, DATA_WATCHER_SERIALIZER), true, true);
-        serialize = Reflection.getMethod(DATA_WATCHER_SERIALIZER, "a", PACKET_DATA_SERIALIZER, Object.class);
+        serialize = ReflectionUtils.supports(20, 6) ? null : Reflection.getMethod(DATA_WATCHER_SERIALIZER, "a", PACKET_DATA_SERIALIZER, Object.class);
         byString = Reflection.getMethod(ENTITY_TYPES, "a", MethodType.methodType(Optional.class, String.class), true, true);
+        codec = ReflectionUtils.supports(20, 6) ? Reflection.getMethod(DATA_WATCHER_SERIALIZER, "codec") : null;
+        encode = ReflectionUtils.supports(20, 6) ? Reflection.getMethod(STREAM_ENCODER, "encode", Object.class, Object.class) : null;
 
         // Initialize constructors.
         if (VERSION > 18) {
@@ -205,18 +226,20 @@ public final class PacketStand {
                     VEC_3D,
                     double.class);
         } else {
-            packetSpawnEntityLiving = Reflection.getConstructor(PACKET_SPAWN_ENTITY_LIVING, PACKET_DATA_SERIALIZER);
+            packetSpawnEntityLiving = Reflection.getPrivateConstructor(PACKET_SPAWN_ENTITY_LIVING, PACKET_DATA_SERIALIZER);
         }
-        packetEntityHeadRotation = Reflection.getConstructor(PACKET_ENTITY_HEAD_ROTATION, PACKET_DATA_SERIALIZER);
-        packetEntityTeleport = Reflection.getConstructor(PACKET_ENTITY_TELEPORT, PACKET_DATA_SERIALIZER);
+        packetEntityHeadRotation = Reflection.getPrivateConstructor(PACKET_ENTITY_HEAD_ROTATION, PACKET_DATA_SERIALIZER);
+        packetEntityTeleport = Reflection.getPrivateConstructor(PACKET_ENTITY_TELEPORT, PACKET_DATA_SERIALIZER);
         packetEntityEquipment = (VERSION > 15) ?
                 Reflection.getConstructor(PACKET_ENTITY_EQUIPMENT, int.class, List.class) :
                 Reflection.getConstructor(PACKET_ENTITY_EQUIPMENT, int.class, ENUM_ITEM_SLOT, ITEM_STACK);
         packetEntityDestroy = Reflection.getConstructor(PACKET_ENTITY_DESTROY, PROTOCOL == 755 ? int.class : int[].class);
         vector3f = Reflection.getConstructor(VECTOR3F, float.class, float.class, float.class);
-        packetDataSerializer = Reflection.getConstructor(PACKET_DATA_SERIALIZER, ByteBuf.class);
-        packetEntityMetadata = Reflection.getConstructor(PACKET_ENTITY_METADATA, PACKET_DATA_SERIALIZER);
+        packetDataSerializer = Reflection.getPrivateConstructor(PACKET_DATA_SERIALIZER, ByteBuf.class);
+        packetEntityMetadata = Reflection.getPrivateConstructor(PACKET_ENTITY_METADATA, ReflectionUtils.supports(20, 6) ? REGISTRY_FRIENDLY_BYTE_BUF : PACKET_DATA_SERIALIZER);
         dataWatcherItem = Reflection.getConstructor(DATA_WATCHER_ITEM, DATA_WATCHER_OBJECT, Object.class);
+        registryFriendlyByteBuf = ReflectionUtils.supports(20, 6) ? Reflection.getConstructor(REGISTRY_FRIENDLY_BYTE_BUF, ByteBuf.class, REGISTRY_ACCESS) : null;
+        immutableRegistryAccess = ReflectionUtils.supports(20, 6) ? Reflection.getConstructor(IMMUTABLE_REGISTRY_ACCESS, List.class) : null;
 
         try {
             // Get the protocol version, only needed for 1.17.
@@ -233,7 +256,19 @@ public final class PacketStand {
 
         // Initialize fields.
         if (ReflectionUtils.supports(18)) {
-            if (ReflectionUtils.supports(20, 2)) {
+            if (ReflectionUtils.supports(20, 6)) {
+                DWO_ENTITY_DATA = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "ap"));
+                DWO_CUSTOM_NAME = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "aS"));
+                DWO_CUSTOM_NAME_VISIBLE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "aT"));
+                DWO_ARMOR_STAND_DATA = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bG"));
+
+                DWO_HEAD_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bH"));
+                DWO_BODY_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bI"));
+                DWO_LEFT_ARM_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bJ"));
+                DWO_RIGHT_ARM_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bK"));
+                DWO_LEFT_LEG_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bL"));
+                DWO_RIGHT_LEG_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bM"));
+            } else if (ReflectionUtils.supports(20, 2)) {
                 DWO_ENTITY_DATA = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "ao"));
                 DWO_CUSTOM_NAME = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "aU"));
                 DWO_CUSTOM_NAME_VISIBLE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "aV"));
@@ -311,8 +346,12 @@ public final class PacketStand {
         ZERO = Reflection.getFieldValue(Reflection.getFieldGetter(VEC_3D, VERSION > 18 ? "b" : "a"));
         ARMOR_STAND = getArmorStandType();
         ENTITY_TYPE_ID = getEntityTypeId();
+        ITEM = ReflectionUtils.supports(20, 6) ? Reflection.getFieldValue(Reflection.getField(BUILT_IN_REGISTRIES, DEFAULTED_REGISTRY, "h", true, "ITEM")) : null;
+        DATA_COMPONENT_TYPE = ReflectionUtils.supports(20, 6) ? Reflection.getFieldValue(Reflection.getField(BUILT_IN_REGISTRIES, DEFAULTED_REGISTRY, "as", true, "DATA_COMPONENT_TYPE")) : null;
 
-        if (ReflectionUtils.supports(19, 4)) {
+        if (ReflectionUtils.supports(20, 6)) {
+            ENTITY_COUNTER = (AtomicInteger) Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "c"));
+        } else if (ReflectionUtils.supports(19, 4)) {
             ENTITY_COUNTER = (AtomicInteger) Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "d"));
         } else if (ReflectionUtils.supports(18, 2)) {
             ENTITY_COUNTER = (AtomicInteger) Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "c"));
@@ -553,7 +592,14 @@ public final class PacketStand {
     private Object createEntityMetadata(List<Object> items) throws Throwable {
         Objects.requireNonNull(items);
 
-        Object packetDataSerializer = PacketStand.packetDataSerializer.invoke(Unpooled.buffer());
+        Object packetDataSerializer;
+        if (ReflectionUtils.supports(20, 6)) {
+            Object registry = immutableRegistryAccess.invoke(Arrays.asList(ITEM, DATA_COMPONENT_TYPE));
+            packetDataSerializer = registryFriendlyByteBuf.invoke(Unpooled.buffer(), registry);
+        } else {
+            packetDataSerializer = PacketStand.packetDataSerializer.invoke(Unpooled.buffer());
+        }
+
         writeInt.invoke(packetDataSerializer, entityId);
 
         for (Object item : items) {
@@ -567,7 +613,13 @@ public final class PacketStand {
 
             writeByte.invoke(packetDataSerializer, (byte) serializerIndex);
             writeInt.invoke(packetDataSerializer, serializerTypeId);
-            serialize.invoke(serializer, packetDataSerializer, value);
+
+            if (ReflectionUtils.supports(20, 6)) {
+                Object codecObject = codec.invoke(serializer);
+                encode.invoke(codecObject, packetDataSerializer, value);
+            } else {
+                serialize.invoke(serializer, packetDataSerializer, value);
+            }
         }
 
         writeByte.invoke(packetDataSerializer, 0xff);
@@ -678,8 +730,7 @@ public final class PacketStand {
 
         private static @Nullable Object getNMS(int ordinal, String name) {
             try {
-                Field field = ENUM_ITEM_SLOT.getField(VERSION > 16 ? String.valueOf(ALPHABET[ordinal]) : name);
-                return field.get(null);
+                return Reflection.getField(ENUM_ITEM_SLOT, ENUM_ITEM_SLOT, String.valueOf(ALPHABET[ordinal]), true, name).invoke();
             } catch (Throwable exception) {
                 exception.printStackTrace();
                 return null;

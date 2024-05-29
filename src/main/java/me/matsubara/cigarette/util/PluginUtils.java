@@ -1,9 +1,9 @@
 package me.matsubara.cigarette.util;
 
+import com.cryptomorin.xseries.ReflectionUtils;
 import me.matsubara.cigarette.CigarettePlugin;
 import net.md_5.bungee.api.ChatColor;
 import org.apache.commons.io.FileUtils;
-import org.bukkit.Bukkit;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -27,9 +27,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class PluginUtils {
-
-    public static final String VERSION = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
-    public static final int MINOR_VERSION = Integer.parseInt(VERSION.split("_")[1]);
 
     private static final Pattern PATTERN = Pattern.compile("&(#[\\da-fA-F]{6})");
 
@@ -61,7 +58,7 @@ public final class PluginUtils {
     }
 
     public static String translate(String message) {
-        if (PluginUtils.MINOR_VERSION < 16) return oldTranslate(message);
+        if (ReflectionUtils.MINOR_NUMBER < 16) return oldTranslate(message);
 
         Matcher matcher = PATTERN.matcher(oldTranslate(message));
         StringBuilder builder = new StringBuilder();

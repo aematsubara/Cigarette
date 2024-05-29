@@ -1,8 +1,8 @@
 package me.matsubara.cigarette.data;
 
+import com.cryptomorin.xseries.ReflectionUtils;
 import com.google.common.base.Strings;
 import me.matsubara.cigarette.CigarettePlugin;
-import me.matsubara.cigarette.util.PluginUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -38,7 +38,7 @@ public final class Shape {
     @SuppressWarnings("deprecation")
     public void register(ItemStack item) {
         // Since 1.12, a namespaced key is required.
-        if (PluginUtils.MINOR_VERSION > 11) {
+        if (ReflectionUtils.MINOR_NUMBER > 11) {
             NamespacedKey key = new NamespacedKey(plugin, "cigarette_" + name);
             recipe = shaped ? new ShapedRecipe(key, item) : new ShapelessRecipe(key, item);
         } else {
