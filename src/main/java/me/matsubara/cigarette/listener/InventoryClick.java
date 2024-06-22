@@ -28,7 +28,7 @@ public final class InventoryClick implements Listener {
 
         ItemStack cursor = event.getCursor();
         if (cursor == null) return;
-        if (cursor.getType() != Material.FLINT_AND_STEEL && cursor.getType() != Material.FIRE_CHARGE) return;
+        if (cursor.getType() != Material.FLINT_AND_STEEL.asItemType() && cursor.getType() != Material.FIRE_CHARGE.asItemType()) return;
 
         ItemStack current = event.getCurrentItem();
         if (current == null) return;
@@ -47,7 +47,7 @@ public final class InventoryClick implements Listener {
             event.setCurrentItem(null);
         }
 
-        if (cursor.getType() == Material.FLINT_AND_STEEL) {
+        if (cursor.getType() == Material.FLINT_AND_STEEL.asItemType()) {
             Damageable damageable = (Damageable) cursor.getItemMeta();
             if (damageable != null) damageable.setDamage(damageable.getDamage() + 1);
             cursor.setItemMeta(damageable);
