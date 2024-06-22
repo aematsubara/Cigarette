@@ -1,6 +1,6 @@
 package me.matsubara.cigarette.util;
 
-import com.cryptomorin.xseries.ReflectionUtils;
+import com.cryptomorin.xseries.reflection.XReflection;
 import me.matsubara.cigarette.CigarettePlugin;
 import net.md_5.bungee.api.ChatColor;
 import org.apache.commons.io.FileUtils;
@@ -58,7 +58,7 @@ public final class PluginUtils {
     }
 
     public static String translate(String message) {
-        if (ReflectionUtils.MINOR_NUMBER < 16) return oldTranslate(message);
+        if (XReflection.MINOR_NUMBER < 16) return oldTranslate(message);
 
         Matcher matcher = PATTERN.matcher(oldTranslate(message));
         StringBuilder builder = new StringBuilder();

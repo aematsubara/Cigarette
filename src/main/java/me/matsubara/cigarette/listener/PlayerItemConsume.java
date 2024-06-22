@@ -19,7 +19,7 @@ public final class PlayerItemConsume implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerItemConsume(@NotNull PlayerItemConsumeEvent event) {
-        if (event.getItem().getType() != Material.MILK_BUCKET) return;
+        if (event.getItem().getType() != Material.MILK_BUCKET.asItemType()) return;
 
         Player player = event.getPlayer();
         if (plugin.getConfig().getBoolean("remove-when-drinking-milk")) plugin.extinguishIfPossible(player);

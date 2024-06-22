@@ -1,6 +1,5 @@
 package me.matsubara.cigarette.manager;
 
-import com.google.common.base.Enums;
 import lombok.Getter;
 import me.matsubara.cigarette.CigarettePlugin;
 import me.matsubara.cigarette.cigarette.Cigarette;
@@ -27,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @SuppressWarnings("unused")
@@ -147,7 +147,8 @@ public final class CigaretteManager {
         String[] split = StringUtils.split(StringUtils.deleteWhitespace(particleString), ',');
         if (split.length == 0) split = StringUtils.split(particleString, ' ');
 
-        Particle particle = Enums.getIfPresent(Particle.class, split[0]).orNull();
+
+        Particle particle = Optional.ofNullable(Particle.valueOf(split[0])).orElse(null);
         if (particle == null) return null;
 
         int amount = 1;

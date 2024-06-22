@@ -1,6 +1,6 @@
 package me.matsubara.cigarette.data;
 
-import com.cryptomorin.xseries.ReflectionUtils;
+import com.cryptomorin.xseries.reflection.XReflection;
 import com.google.common.base.Strings;
 import me.matsubara.cigarette.CigarettePlugin;
 import org.apache.commons.lang3.StringUtils;
@@ -38,7 +38,7 @@ public final class Shape {
     @SuppressWarnings("deprecation")
     public void register(ItemStack item) {
         // Since 1.12, a namespaced key is required.
-        if (ReflectionUtils.MINOR_NUMBER > 11) {
+        if (XReflection.MINOR_NUMBER > 11) {
             NamespacedKey key = new NamespacedKey(plugin, "cigarette_" + name);
             recipe = shaped ? new ShapedRecipe(key, item) : new ShapelessRecipe(key, item);
         } else {
@@ -65,9 +65,9 @@ public final class Shape {
             if (shaped) {
                 // Empty space are used for AIR.
                 if (key == ' ') continue;
-                ((ShapedRecipe) recipe).setIngredient(key, type);
+                ((ShapedRecipe) recipe).setIngredient(key, type.asItemType());
             } else {
-                ((ShapelessRecipe) recipe).addIngredient(type);
+                ((ShapelessRecipe) recipe).addIngredient(type.asItemType());
             }
         }
 

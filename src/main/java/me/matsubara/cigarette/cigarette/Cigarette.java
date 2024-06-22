@@ -155,7 +155,7 @@ public final class Cigarette extends BukkitRunnable {
 
 
         ItemStack handItem = stand.getSettings().getEquipment().get(PacketStand.ItemSlot.MAINHAND);
-        return handItem != null && handItem.getType() != Material.AIR;
+        return handItem != null && handItem.getType() != Material.AIR.asItemType();
     }
 
     public void show(boolean show) {
