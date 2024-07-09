@@ -84,7 +84,7 @@ public final class CigaretteManager {
             Material material;
             try {
                 material = Material.valueOf(materialString.toUpperCase());
-            } catch (IllegalStateException exception) {
+            } catch (IllegalArgumentException exception) {
                 plugin.getLogger().warning("Invalid material type! {" + materialString + "}");
                 continue;
             }
