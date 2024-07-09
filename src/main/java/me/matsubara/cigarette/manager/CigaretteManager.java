@@ -99,7 +99,7 @@ public final class CigaretteManager {
             int modelData = configuration.getInt("cigarettes." + path + ".model-data", Integer.MIN_VALUE);
             if (modelData != Integer.MIN_VALUE) meta.setCustomModelData(modelData);
 
-            // Save name of the cigarrete to identify the type.
+            // Save the name of the cigarrete to identify the type.
             meta.getPersistentDataContainer().set(plugin.getIdentifier(), PersistentDataType.STRING, path);
 
             item.setItemMeta(meta);

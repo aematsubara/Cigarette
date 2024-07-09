@@ -1,6 +1,8 @@
 package me.matsubara.cigarette.util;
 
-import com.cryptomorin.xseries.ReflectionUtils;
+import com.cryptomorin.xseries.reflection.XReflection;
+import com.cryptomorin.xseries.reflection.minecraft.MinecraftMapping;
+import com.cryptomorin.xseries.reflection.minecraft.MinecraftPackage;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,7 +93,7 @@ public final class Reflection {
     public static @Nullable MethodHandle getMethod(Class<?> refc, String name, MethodType type, boolean isStatic, boolean printStackTrace, String... extraNames) {
         try {
             if (isStatic) return LOOKUP.findStatic(refc, name, type);
-            if (ReflectionUtils.MINOR_NUMBER > 17) {
+            if (XReflection.MINOR_NUMBER > 17) {
                 Method method = refc.getMethod(name, type.parameterArray());
                 if (!method.getReturnType().isAssignableFrom(type.returnType())) {
                     throw new NoSuchMethodException();
@@ -175,11 +177,11 @@ public final class Reflection {
         return null;
     }
 
-    @SuppressWarnings("UnstableApiUsage")
-    public static Class<?> getNMSClass(String packageName, String mojangName, String spigotName) {
-        return ReflectionUtils.ofMinecraft()
-                .inPackage(ReflectionUtils.MinecraftPackage.NMS, packageName)
-                .map(ReflectionUtils.MinecraftMapping.MOJANG, mojangName)
-                .map(ReflectionUtils.MinecraftMapping.SPIGOT, spigotName).unreflect();
+    @SuppressWarnings("PatternValidation")
+    public static @NotNull Class<?> getNMSClass(String packageName, String mojangName, String spigotName) {
+        return XReflection.ofMinecraft()
+                .inPackage(MinecraftPackage.NMS, packageName)
+                .map(MinecraftMapping.MOJANG, mojangName)
+                .map(MinecraftMapping.SPIGOT, spigotName).unreflect();
     }
 }

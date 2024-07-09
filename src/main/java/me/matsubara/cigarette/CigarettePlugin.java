@@ -1,6 +1,6 @@
 package me.matsubara.cigarette;
 
-import com.cryptomorin.xseries.ReflectionUtils;
+import com.cryptomorin.xseries.reflection.XReflection;
 import com.google.common.collect.ImmutableList;
 import com.tchristofferson.configupdater.ConfigUpdater;
 import lombok.Getter;
@@ -49,7 +49,7 @@ public final class CigarettePlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         PluginManager manager = getServer().getPluginManager();
-        if (ReflectionUtils.MINOR_NUMBER < 17) {
+        if (XReflection.MINOR_NUMBER < 17) {
             getLogger().severe("This plugin only works from 1.17 and up, disabling...");
             manager.disablePlugin(this);
             return;

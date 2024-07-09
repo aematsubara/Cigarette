@@ -1,7 +1,7 @@
 package me.matsubara.cigarette.data;
 
-import com.cryptomorin.xseries.ReflectionUtils;
 import com.google.common.base.Strings;
+import lombok.Getter;
 import me.matsubara.cigarette.CigarettePlugin;
 import org.apache.commons.lang3.StringUtils;
 import org.bukkit.Bukkit;
@@ -24,7 +24,7 @@ public final class Shape {
     private final List<String> ingredients;
     private final List<String> shape;
 
-    private Recipe recipe;
+    private @Getter Recipe recipe;
 
     public Shape(CigarettePlugin plugin, String name, boolean shaped, List<String> ingredients, List<String> shape, ItemStack result) {
         this.plugin = plugin;
@@ -35,15 +35,9 @@ public final class Shape {
         register(result);
     }
 
-    @SuppressWarnings("deprecation")
     public void register(ItemStack item) {
-        // Since 1.12, a namespaced key is required.
-        if (ReflectionUtils.MINOR_NUMBER > 11) {
-            NamespacedKey key = new NamespacedKey(plugin, "cigarette_" + name);
-            recipe = shaped ? new ShapedRecipe(key, item) : new ShapelessRecipe(key, item);
-        } else {
-            recipe = shaped ? new ShapedRecipe(item) : new ShapelessRecipe(item);
-        }
+        NamespacedKey key = new NamespacedKey(plugin, "cigarette_" + name);
+        recipe = shaped ? new ShapedRecipe(key, item) : new ShapelessRecipe(key, item);
 
         if (shaped) {
             ((ShapedRecipe) recipe).shape(shape.toArray(new String[0]));
@@ -56,25 +50,21 @@ public final class Shape {
 
             Material type = Material.valueOf(split[0]);
 
-            char key = ' ';
+            char ingredientKey = ' ';
 
             if (split.length > 1) {
-                key = split[1].charAt(0);
+                ingredientKey = split[1].charAt(0);
             }
 
             if (shaped) {
-                // Empty space are used for AIR.
-                if (key == ' ') continue;
-                ((ShapedRecipe) recipe).setIngredient(key, type);
+                // Empty space is used for AIR.
+                if (ingredientKey == ' ') continue;
+                ((ShapedRecipe) recipe).setIngredient(ingredientKey, type);
             } else {
                 ((ShapelessRecipe) recipe).addIngredient(type);
             }
         }
 
         Bukkit.addRecipe(recipe);
-    }
-
-    public Recipe getRecipe() {
-        return recipe;
     }
 }
