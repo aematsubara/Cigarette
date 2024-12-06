@@ -2,7 +2,7 @@
 config-version: 1
 
 # The rendering distance of the cigarettes.
-render-distance: 80
+render-distance: 72.0
 
 # If true, when drinking milk, the cigarette will be extinguished.
 remove-when-drinking-milk: true

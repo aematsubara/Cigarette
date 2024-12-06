@@ -9,6 +9,7 @@
 # # crafting.ingredients > the ingredients that'll be used for the recipe. Format: MATERIAL_NAME, KEY (used for shape, see below).
 # # crafting.shape > the shape that'll be used on the crafting table, using the KEY specified (only 3 lines required, spaces are used as AIR).
 # # particles > the particle that'll be used when smoking. Format: PARTICLE_NAME, AMOUNT, rX, rY, rZ, SPEED (r = random offset).
+# # * If AMOUNT is set to 0, the offset will be directional (only for some particles).
 # # requires-lighting > whether a flint and steel is required to light the cigarette. If true, you must click on the cigarette with the flint and steel in the cursor.
 # # second-hand-smoke > whether when smoking, nearby players also receive the effects of the cigarette.
 # # sounds.light/extinguish/smoke > define a different sound than the default one.
@@ -47,7 +48,7 @@ cigarettes:
         - PGP
         - PGP
         - PGP
-    particles: SMOKE_NORMAL, 5, 0.1, 0.1, 0.1, 0.001
+    particles: SMOKE_NORMAL, 0, 0.1, 1.0, 0.1, 0.001
   weed:
     craft: true
     duration: 15
@@ -64,14 +65,14 @@ cigarettes:
         - PAPER
         - GUNPOWDER
       shape: [ ]
-    particles: SMOKE_LARGE, 5, 0.1, 0.1, 0.1, 0.005
+    particles: SMOKE_LARGE, 0, 0.1, 1,0, 0.1, 0.005
   classic-pipe:
     duration: 15
     material: WOODEN_HOE
     model-data: 125
     display-name: "&d&lClassic Pipe"
     requires-lighting: true
-    particles: CAMPFIRE_COSY_SMOKE, 3, 0.05, 0.05, 0.05, 0.005
+    particles: CAMPFIRE_COSY_SMOKE, 0, 0.05, 1.0, 0.05, 0.005
     sounds:
       light: ITEM_FIRECHARGE_USE, 1.0, 1.0
       extinguish: BLOCK_LAVA_EXTINGUISH, 1.0, 1.0
@@ -83,7 +84,7 @@ cigarettes:
     display-name: "&6&lGolden Pipe"
     requires-lighting: true
     small: true
-    particles: CAMPFIRE_COSY_SMOKE, 3, 0.05, 0.05, 0.05, 0.005
+    particles: CAMPFIRE_COSY_SMOKE, 0, 0.05, 1.0, 0.05, 0.005
     sounds:
       light: ITEM_FIRECHARGE_USE, 1.0, 1.0
       extinguish: BLOCK_LAVA_EXTINGUISH, 1.0, 1.0

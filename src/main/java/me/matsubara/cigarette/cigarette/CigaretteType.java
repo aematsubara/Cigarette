@@ -1,5 +1,6 @@
 package me.matsubara.cigarette.cigarette;
 
+import com.cryptomorin.xseries.XSound;
 import lombok.Getter;
 import me.matsubara.cigarette.data.Shape;
 import me.matsubara.cigarette.data.Smoke;
@@ -23,9 +24,9 @@ public final class CigaretteType {
     private final List<String> effects;
     private final Shape shape;
     private final Smoke smoke;
-    private final String lightSound;
-    private final String extinguishSound;
-    private final String smokeSound;
+    private final XSound.Record lightSound;
+    private final XSound.Record extinguishSound;
+    private final XSound.Record smokeSound;
     private final boolean secondHandSmoke;
     private final boolean requiresLightning;
 
@@ -51,9 +52,9 @@ public final class CigaretteType {
         this.effects = effects;
         this.shape = shape;
         this.smoke = smoke;
-        this.lightSound = lightSound;
-        this.extinguishSound = extinguishSound;
-        this.smokeSound = smokeSound;
+        this.lightSound = XSound.parse(lightSound);
+        this.extinguishSound = XSound.parse(extinguishSound);
+        this.smokeSound = XSound.parse(smokeSound);
         this.secondHandSmoke = secondHandSmoke;
         this.requiresLightning = requiresLightning;
     }

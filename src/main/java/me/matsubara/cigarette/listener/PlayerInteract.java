@@ -1,9 +1,9 @@
 package me.matsubara.cigarette.listener;
 
 import me.matsubara.cigarette.CigarettePlugin;
-import me.matsubara.cigarette.cigarette.Cigarette;
 import me.matsubara.cigarette.cigarette.CigaretteType;
 import me.matsubara.cigarette.command.MainCommand;
+import me.matsubara.cigarette.manager.CigaretteManager;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -32,7 +32,9 @@ public final class PlayerInteract implements Listener {
         // Only with main-hand, to prevent dupes.
         if (event.getHand() != EquipmentSlot.HAND) return;
 
-        CigaretteType type = plugin.getTypeByItem(item);
+        CigaretteManager manager = plugin.getCigaretteManager();
+
+        CigaretteType type = manager.getTypeByItem(item);
         if (type == null) return;
 
         event.setCancelled(true);
@@ -42,13 +44,8 @@ public final class PlayerInteract implements Listener {
             return;
         }
 
-        plugin.extinguishIfPossible(player);
-
-        new Cigarette(plugin, player, type);
-        player.sendMessage(plugin.getString(MainCommand.MSG_LIGHT));
-
+        manager.create(player, type);
         item.setAmount(item.getAmount() - 1);
-
         event.setCancelled(true);
     }
 }

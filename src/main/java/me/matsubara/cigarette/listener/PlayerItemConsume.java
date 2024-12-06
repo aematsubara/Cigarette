@@ -22,6 +22,8 @@ public final class PlayerItemConsume implements Listener {
         if (event.getItem().getType() != Material.MILK_BUCKET) return;
 
         Player player = event.getPlayer();
-        if (plugin.getConfig().getBoolean("remove-when-drinking-milk")) plugin.extinguishIfPossible(player);
+        if (plugin.getConfig().getBoolean("remove-when-drinking-milk")) {
+            plugin.getCigaretteManager().extinguishIfPossible(player);
+        }
     }
 }

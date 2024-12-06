@@ -2,26 +2,29 @@ package me.matsubara.cigarette.util.stand;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.Accessors;
+import me.matsubara.cigarette.util.stand.data.ItemSlot;
+import me.matsubara.cigarette.util.stand.data.Pose;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.EulerAngle;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
+@Accessors(chain = true)
 public final class StandSettings implements Cloneable {
 
     // Model data.
     private String partName;
-    private double xOffset;
-    private double yOffset;
-    private double zOffset;
+    private Vector offset;
     private float extraYaw;
-    private final List<String> tags = new ArrayList<>();
-
-    private double externalX;
-    private double externalZ;
+    private List<String> tags = new ArrayList<>();
 
     // Entity settings.
     private boolean invisible;
@@ -43,7 +46,7 @@ public final class StandSettings implements Cloneable {
     private EulerAngle rightLegPose;
 
     // Entity equipment.
-    private final Map<PacketStand.ItemSlot, ItemStack> equipment = new HashMap<>();
+    private Map<ItemSlot, ItemStack> equipment = new HashMap<>();
 
     public StandSettings() {
         // Default settings.
@@ -59,27 +62,46 @@ public final class StandSettings implements Cloneable {
         this.customNameVisible = false;
 
         // Default poses.
-        this.headPose = EulerAngle.ZERO;
-        this.bodyPose = EulerAngle.ZERO;
-        this.leftArmPose = EulerAngle.ZERO;
-        this.rightArmPose = EulerAngle.ZERO;
-        this.leftLegPose = EulerAngle.ZERO;
-        this.rightLegPose = EulerAngle.ZERO;
-    }
-
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    public boolean hasEquipment() {
-        return equipment.values().stream().anyMatch(Objects::nonNull);
+        for (Pose pose : Pose.values()) {
+            pose.set(this, EulerAngle.ZERO);
+        }
     }
 
     @NotNull
     public StandSettings clone() {
         try {
             StandSettings copy = (StandSettings) super.clone();
-            copy.setCustomName(null);
+
+            // Clone tags list.
+            copy.setTags(new ArrayList<>(tags));
+
+            // Clone equipment map.
+            Map<ItemSlot, ItemStack> equipment = new HashMap<>();
+            for (Map.Entry<ItemSlot, ItemStack> entry : this.equipment.entrySet()) {
+                if (entry == null) continue;
+
+                ItemSlot slot = entry.getKey();
+                if (slot == null) continue;
+
+                ItemStack item = entry.getValue();
+                if (item == null) continue;
+
+                equipment.put(slot, item.clone());
+            }
+            copy.setEquipment(equipment);
+
+            // Clone angles.
+            for (Pose pose : Pose.values()) {
+                pose.set(copy, clonePose(pose.get(this)));
+            }
+
             return copy;
         } catch (CloneNotSupportedException exception) {
             throw new Error(exception);
         }
+    }
+
+    private @NotNull EulerAngle clonePose(@NotNull EulerAngle pose) {
+        return new EulerAngle(pose.getX(), pose.getY(), pose.getZ());
     }
 }

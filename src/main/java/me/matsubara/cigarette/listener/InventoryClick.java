@@ -1,9 +1,8 @@
 package me.matsubara.cigarette.listener;
 
 import me.matsubara.cigarette.CigarettePlugin;
-import me.matsubara.cigarette.cigarette.Cigarette;
 import me.matsubara.cigarette.cigarette.CigaretteType;
-import me.matsubara.cigarette.command.MainCommand;
+import me.matsubara.cigarette.manager.CigaretteManager;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -33,7 +32,9 @@ public final class InventoryClick implements Listener {
         ItemStack current = event.getCurrentItem();
         if (current == null) return;
 
-        CigaretteType type = plugin.getTypeByItem(current);
+        CigaretteManager manager = plugin.getCigaretteManager();
+
+        CigaretteType type = manager.getTypeByItem(current);
         if (type == null) return;
 
         event.setCancelled(true);
@@ -62,9 +63,6 @@ public final class InventoryClick implements Listener {
             }
         }
 
-        plugin.extinguishIfPossible(player);
-
-        new Cigarette(plugin, player, type);
-        player.sendMessage(plugin.getString(MainCommand.MSG_LIGHT));
+        manager.create(player, type);
     }
 }

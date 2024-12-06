@@ -5,10 +5,8 @@ import com.google.common.collect.ImmutableList;
 import com.tchristofferson.configupdater.ConfigUpdater;
 import lombok.Getter;
 import me.matsubara.cigarette.cigarette.Cigarette;
-import me.matsubara.cigarette.cigarette.CigaretteType;
 import me.matsubara.cigarette.command.MainCommand;
 import me.matsubara.cigarette.listener.InventoryClick;
-import me.matsubara.cigarette.listener.PlayerDeathOrQuit;
 import me.matsubara.cigarette.listener.PlayerInteract;
 import me.matsubara.cigarette.listener.PlayerItemConsume;
 import me.matsubara.cigarette.manager.CigaretteManager;
@@ -17,14 +15,9 @@ import me.matsubara.cigarette.util.PluginUtils;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -59,7 +52,6 @@ public final class CigarettePlugin extends JavaPlugin {
         standManager = new StandManager(this);
 
         manager.registerEvents(new InventoryClick(this), this);
-        manager.registerEvents(new PlayerDeathOrQuit(this), this);
         manager.registerEvents(new PlayerInteract(this), this);
         manager.registerEvents(new PlayerItemConsume(this), this);
 
@@ -162,51 +154,6 @@ public final class CigarettePlugin extends JavaPlugin {
         if (cigaretteManager == null) return;
         Set<Cigarette> cigarettes = cigaretteManager.getCigarettes();
         if (cigarettes != null) cigarettes.forEach(Cigarette::extinguish);
-    }
-
-    public @Nullable Cigarette getCigarette(Player player) {
-        for (Cigarette cigarette : cigaretteManager.getCigarettes()) {
-            if (cigarette.getOwner().equals(player)) return cigarette;
-        }
-        return null;
-    }
-
-    public @Nullable CigaretteType getTypeByItem(@NotNull ItemStack item) {
-        boolean invalidateOld = getConfig().getBoolean("invalidate-old-cigarettes");
-
-        ItemMeta meta = item.getItemMeta();
-        if (meta == null && invalidateOld) return null;
-
-        String typeName = meta != null ? meta.getPersistentDataContainer().get(identifier, PersistentDataType.STRING) : null;
-        if (typeName == null) {
-            if (invalidateOld) return null;
-
-            for (CigaretteType type : cigaretteManager.getTypes()) {
-                ItemStack clone = type.getItem().clone();
-                ItemMeta cloneMeta = clone.getItemMeta();
-                if (cloneMeta != null) {
-                    cloneMeta.getPersistentDataContainer().remove(identifier);
-                    clone.setItemMeta(cloneMeta);
-                }
-                if (item.isSimilar(clone)) return type;
-            }
-
-            return null;
-        }
-
-        for (CigaretteType type : cigaretteManager.getTypes()) {
-            if (type.getName().equals(typeName)) return type;
-        }
-
-        return null;
-    }
-
-    public void extinguishIfPossible(Player player) {
-        Cigarette cigarette = getCigarette(player);
-        if (cigarette == null) return;
-
-        cigarette.extinguish();
-        player.sendMessage(getString(MainCommand.MSG_EXTINGUISH));
     }
 
     public String getString(String path) {
