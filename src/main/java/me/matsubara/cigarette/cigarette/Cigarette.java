@@ -43,7 +43,7 @@ public final class Cigarette extends BukkitRunnable {
         this.type = type;
 
         StandSettings settings = SETTINGS_CACHE.computeIfAbsent(type.getMaterialType(), this::createSetttings).clone();
-        this.stand = new PacketStand(plugin, createLocation(), settings);
+        this.stand = new PacketStand(plugin, createLocation(), settings, true);
 
         // Play lit sound.
         playSound(stand.getLocation(), type.getLightSound());
@@ -103,16 +103,13 @@ public final class Cigarette extends BukkitRunnable {
                 shouldShow = (pitch > -14.0f) && (pitch < 20.0f),
                 visibilityChanged = show(shouldShow);
 
-        if (visibilityChanged) {
-            stand.invalidateEquipment();
-        }
-
         if (positionChanged || visibilityChanged) {
-            for (Player player : owner.getWorld().getPlayers()) {
-                if (out.contains(player.getUniqueId())) continue;
+            List<Player> players = owner.getWorld().getPlayers();
+            players.removeIf(player -> out.contains(player.getUniqueId()));
 
-                if (positionChanged) stand.sendLocation(player);
-                if (visibilityChanged) stand.sendEquipment(player);
+            if (!players.isEmpty()) {
+                stand.sendLocation(players);
+                stand.sendEquipment(players);
             }
         }
 

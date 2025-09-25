@@ -1,27 +1,33 @@
 package me.matsubara.cigarette.util.stand;
 
 import com.cryptomorin.xseries.reflection.XReflection;
+import com.google.common.base.Strings;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import lombok.Getter;
+import lombok.Setter;
 import me.matsubara.cigarette.CigarettePlugin;
 import me.matsubara.cigarette.util.Reflection;
 import me.matsubara.cigarette.util.stand.data.ItemSlot;
 import me.matsubara.cigarette.util.stand.data.Pose;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.EulerAngle;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@SuppressWarnings("unused")
 @Getter
 public final class PacketStand {
 
@@ -29,7 +35,8 @@ public final class PacketStand {
     private final int id;
     private final UUID uniqueId;
     private final StandSettings settings;
-    private Location location;
+    private final boolean isStand;
+    private @Setter Location location;
     private byte yaw, pitch;
     private World world;
     private boolean destroyed;
@@ -43,13 +50,15 @@ public final class PacketStand {
 
     private static int PROTOCOL = -1;
     private static final int MINOR_NUMBER = XReflection.MINOR_NUMBER;
-    public static final char[] ALPHABET = "abcdefghijklmnopqrstuvwxyz".toCharArray();
+    private static final ItemStack EMPTY_ITEM = new ItemStack(Material.AIR);
 
     // Classes.
     private static final Class<?> CRAFT_CHAT_MESSAGE;
     private static final Class<?> CRAFT_ITEM_STACK;
     private static final Class<?> ENTITY;
     private static final Class<?> ENTITY_ARMOR_STAND;
+    private static final Class<?> ENTITY_DISPLAY;
+    private static final Class<?> ENTITY_TEXT_DISPLAY;
     private static final Class<?> PACKET_SPAWN_ENTITY_LIVING;
     private static final Class<?> PACKET_ENTITY_TELEPORT;
     private static final Class<?> PACKET_ENTITY_METADATA;
@@ -124,6 +133,9 @@ public final class PacketStand {
     private static final Object DWO_ARMOR_STAND_DATA;
     private static final Object DWO_CUSTOM_NAME;
     private static final Object DWO_CUSTOM_NAME_VISIBLE;
+    private static final Object DWO_SCALE_ID;
+    private static final Object DWO_TEXT_ID;
+    private static final Object DWO_BACKGROUND_COLOR_ID;
 
     public static final Object DWO_HEAD_POSE;
     public static final Object DWO_BODY_POSE;
@@ -134,18 +146,22 @@ public final class PacketStand {
 
     private static final Object ZERO;
     private static final Object ARMOR_STAND;
-    private static final int ENTITY_TYPE_ID;
+    private static final int ARMOR_STAND_TYPE_ID;
+    private static final Object TEXT_DISPLAY;
+    private static final int TEXT_DISPLAY_TYPE_ID;
     private static final Object ITEM;
     private static final Object DATA_COMPONENT_TYPE;
     private static final AtomicInteger ENTITY_COUNTER;
 
     static {
         // Initialize classes.
-
         CRAFT_CHAT_MESSAGE = (MINOR_NUMBER > 12) ? Reflection.getCraftClass("util", "CraftChatMessage") : null;
         CRAFT_ITEM_STACK = Reflection.getCraftClass("inventory", "CraftItemStack");
         ENTITY = Reflection.getNMSClass("world.entity", "Entity");
         ENTITY_ARMOR_STAND = Reflection.getNMSClass("world.entity.decoration", "ArmorStand", "EntityArmorStand");
+        boolean display = XReflection.supports(19, 4);
+        ENTITY_DISPLAY = display ? Reflection.getNMSClass("world.entity", "Display") : null;
+        ENTITY_TEXT_DISPLAY = display ? Reflection.getNMSClass("world.entity", "Display$TextDisplay") : null;
         PACKET_SPAWN_ENTITY_LIVING = Reflection.getNMSClass("network.protocol.game",
                 MINOR_NUMBER > 18 ? "ClientboundAddEntityPacket" : "ClientboundAddMobPacket",
                 MINOR_NUMBER > 18 ? "PacketPlayOutSpawnEntity" : "PacketPlayOutSpawnEntityLiving"); // SpawnEntityLiving is removed since 1.19.
@@ -260,125 +276,25 @@ public final class PacketStand {
 
         // Initialize fields.
         CONNECTION = Reflection.getField(ENTITY_PLAYER, GAME_PACKET_LISTENER, "connection", true, "f", "c", "b", "playerConnection");
-        if (XReflection.supports(18)) {
-            // DATA_SHARED_FLAGS_ID, DATA_CUSTOM_NAME, DATA_CUSTOM_NAME_VISIBLE | DATA_CLIENT_FLAGS, DATA_X_POSE
-            if (XReflection.supports(21, 4)) {
-                DWO_ENTITY_DATA = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "am"));
-                DWO_CUSTOM_NAME = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "aO"));
-                DWO_CUSTOM_NAME_VISIBLE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "aP"));
-                DWO_ARMOR_STAND_DATA = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bI"));
-                DWO_HEAD_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bJ"));
-                DWO_BODY_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bK"));
-                DWO_LEFT_ARM_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bL"));
-                DWO_RIGHT_ARM_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bM"));
-                DWO_LEFT_LEG_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bN"));
-                DWO_RIGHT_LEG_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bO"));
-            } else if (XReflection.supports(21, 2)) {
-                DWO_ENTITY_DATA = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "am"));
-                DWO_CUSTOM_NAME = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "aO"));
-                DWO_CUSTOM_NAME_VISIBLE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "aP"));
-                DWO_ARMOR_STAND_DATA = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bJ"));
-                DWO_HEAD_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bK"));
-                DWO_BODY_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bL"));
-                DWO_LEFT_ARM_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bM"));
-                DWO_RIGHT_ARM_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bN"));
-                DWO_LEFT_LEG_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bO"));
-                DWO_RIGHT_LEG_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bP"));
-            } else if (XReflection.supports(21)) {
-                DWO_ENTITY_DATA = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "ap"));
-                DWO_CUSTOM_NAME = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "aQ"));
-                DWO_CUSTOM_NAME_VISIBLE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "aR"));
-
-                DWO_ARMOR_STAND_DATA = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bH"));
-                DWO_HEAD_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bI"));
-                DWO_BODY_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bJ"));
-                DWO_LEFT_ARM_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bK"));
-                DWO_RIGHT_ARM_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bL"));
-                DWO_LEFT_LEG_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bM"));
-                DWO_RIGHT_LEG_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bN"));
-            } else if (XReflection.supports(20, 6)) {
-                DWO_ENTITY_DATA = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "ap"));
-                DWO_CUSTOM_NAME = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "aS"));
-                DWO_CUSTOM_NAME_VISIBLE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "aT"));
-                DWO_ARMOR_STAND_DATA = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bG"));
-                DWO_HEAD_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bH"));
-                DWO_BODY_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bI"));
-                DWO_LEFT_ARM_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bJ"));
-                DWO_RIGHT_ARM_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bK"));
-                DWO_LEFT_LEG_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bL"));
-                DWO_RIGHT_LEG_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bM"));
-            } else if (XReflection.supports(20, 2)) {
-                DWO_ENTITY_DATA = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "ao"));
-                DWO_CUSTOM_NAME = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "aU"));
-                DWO_CUSTOM_NAME_VISIBLE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "aV"));
-                DWO_ARMOR_STAND_DATA = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bC"));
-                DWO_HEAD_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bD"));
-                DWO_BODY_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bE"));
-                DWO_LEFT_ARM_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bF"));
-                DWO_RIGHT_ARM_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bG"));
-                DWO_LEFT_LEG_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bH"));
-                DWO_RIGHT_LEG_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bI"));
-            } else if (XReflection.supports(20)) {
-                DWO_ENTITY_DATA = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "an"));
-                DWO_CUSTOM_NAME = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "aU"));
-                DWO_CUSTOM_NAME_VISIBLE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "aV"));
-                DWO_ARMOR_STAND_DATA = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bC"));
-                DWO_HEAD_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bD"));
-                DWO_BODY_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bE"));
-                DWO_LEFT_ARM_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bF"));
-                DWO_RIGHT_ARM_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bG"));
-                DWO_LEFT_LEG_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bH"));
-                DWO_RIGHT_LEG_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bI"));
-            } else if (XReflection.supports(19, 4)) {
-                DWO_ENTITY_DATA = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "an"));
-                DWO_CUSTOM_NAME = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "aR"));
-                DWO_CUSTOM_NAME_VISIBLE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "aS"));
-                DWO_ARMOR_STAND_DATA = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bB"));
-                DWO_HEAD_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bC"));
-                DWO_BODY_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bD"));
-                DWO_LEFT_ARM_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bE"));
-                DWO_RIGHT_ARM_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bF"));
-                DWO_LEFT_LEG_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bG"));
-                DWO_RIGHT_LEG_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bH"));
-            } else if (XReflection.supports(18, 2)) {
-                DWO_ENTITY_DATA = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "Z"));
-                DWO_CUSTOM_NAME = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "aM"));
-                DWO_CUSTOM_NAME_VISIBLE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "aN"));
-                DWO_ARMOR_STAND_DATA = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bG"));
-                DWO_HEAD_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bH"));
-                DWO_BODY_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bI"));
-                DWO_LEFT_ARM_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bJ"));
-                DWO_RIGHT_ARM_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bK"));
-                DWO_LEFT_LEG_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bL"));
-                DWO_RIGHT_LEG_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bM"));
-            } else {
-                DWO_ENTITY_DATA = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "aa"));
-                DWO_CUSTOM_NAME = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "aL"));
-                DWO_CUSTOM_NAME_VISIBLE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "aM"));
-                DWO_ARMOR_STAND_DATA = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bH"));
-                DWO_HEAD_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bI"));
-                DWO_BODY_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bJ"));
-                DWO_LEFT_ARM_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bK"));
-                DWO_RIGHT_ARM_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bL"));
-                DWO_LEFT_LEG_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bM"));
-                DWO_RIGHT_LEG_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bN"));
-            }
-        } else {
-            DWO_ENTITY_DATA = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "Z"));
-            DWO_CUSTOM_NAME = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "aJ"));
-            DWO_CUSTOM_NAME_VISIBLE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "aK"));
-            DWO_ARMOR_STAND_DATA = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bG"));
-            DWO_HEAD_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bH"));
-            DWO_BODY_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bI"));
-            DWO_LEFT_ARM_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bJ"));
-            DWO_RIGHT_ARM_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bK"));
-            DWO_LEFT_LEG_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bL"));
-            DWO_RIGHT_LEG_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bM"));
-        }
-
+        DWOData dwoData = DWOData.getByVersion();
+        DWO_ENTITY_DATA = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, dwoData.entityData));
+        DWO_CUSTOM_NAME = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, dwoData.customName));
+        DWO_CUSTOM_NAME_VISIBLE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, dwoData.customNameVisible));
+        DWO_ARMOR_STAND_DATA = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, dwoData.armorStandData));
+        DWO_HEAD_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, dwoData.headPose));
+        DWO_BODY_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, dwoData.bodyPose));
+        DWO_LEFT_ARM_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, dwoData.leftArmPose));
+        DWO_RIGHT_ARM_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, dwoData.rightArmPose));
+        DWO_LEFT_LEG_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, dwoData.leftLegPose));
+        DWO_RIGHT_LEG_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, dwoData.rightLegPose));
+        DWO_SCALE_ID = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_DISPLAY, dwoData.displayScale));
+        DWO_TEXT_ID = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_TEXT_DISPLAY, dwoData.displayText));
+        DWO_BACKGROUND_COLOR_ID = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_TEXT_DISPLAY, dwoData.displayBackgroundColor));
         ZERO = Reflection.getFieldValue(Reflection.getField(VEC_3D, VEC_3D, "a", true, "b", "c", "ZERO"));
-        ARMOR_STAND = getArmorStandType();
-        ENTITY_TYPE_ID = getEntityTypeId();
+        ARMOR_STAND = getType(EntityType.ARMOR_STAND);
+        ARMOR_STAND_TYPE_ID = getTypeId(ARMOR_STAND);
+        TEXT_DISPLAY = display ? getType(EntityType.TEXT_DISPLAY) : null;
+        TEXT_DISPLAY_TYPE_ID = TEXT_DISPLAY != null ? getTypeId(TEXT_DISPLAY) : -1;
         ITEM = XReflection.supports(20, 6) ? Reflection.getFieldValue(Reflection.getField(BUILT_IN_REGISTRIES, DEFAULTED_REGISTRY, "h", true, "ITEM")) : null;
 
         if (XReflection.supports(20, 6)) {
@@ -403,11 +319,12 @@ public final class PacketStand {
         }
     }
 
-    public PacketStand(CigarettePlugin plugin, @NotNull Location location, StandSettings settings) {
+    public PacketStand(CigarettePlugin plugin, @NotNull Location location, StandSettings settings, boolean isStand) {
         this.plugin = plugin;
         this.id = ENTITY_COUNTER.incrementAndGet();
         this.uniqueId = UUID.randomUUID();
         this.settings = settings;
+        this.isStand = isStand;
         invalidTeleport(location);
     }
 
@@ -437,7 +354,7 @@ public final class PacketStand {
                     clampXZ(location.getZ()),
                     !Float.isFinite(pitch) ? 0.0f : pitch,
                     !Float.isFinite(yaw) ? 0.0f : yaw,
-                    ARMOR_STAND,
+                    isStand ? ARMOR_STAND : TEXT_DISPLAY,
                     0,
                     ZERO,
                     location.getYaw());
@@ -459,7 +376,7 @@ public final class PacketStand {
             Object packetSerializer = packetDataSerializer.invoke(Unpooled.buffer());
             writeInt.invoke(packetSerializer, id);
             writeUUID.invoke(packetSerializer, uniqueId);
-            writeInt.invoke(packetSerializer, ENTITY_TYPE_ID);
+            writeInt.invoke(packetSerializer, isStand ? ARMOR_STAND_TYPE_ID : TEXT_DISPLAY_TYPE_ID); // Text display won't work here.
             writeDouble.invoke(packetSerializer, location.getX());
             writeDouble.invoke(packetSerializer, location.getY());
             writeDouble.invoke(packetSerializer, location.getZ());
@@ -504,9 +421,26 @@ public final class PacketStand {
         sendPacket(player, createTeleport());
     }
 
+    public void sendLocation(Collection<Player> players) {
+        sendPacket(players, createTeleport());
+    }
+
+    public void teleport(Collection<Player> players, Location location) {
+        if (invalidTeleport(location)) return;
+        if (players.isEmpty()) return;
+
+        // No need to send a head rotation packet (RotateHeadPacket/EntityHeadRotation).
+        sendPacket(players, createTeleport());
+    }
+
+    public void teleport(Player player, Location location) {
+        if (invalidTeleport(location)) return;
+
+        sendLocation(player);
+    }
+
     public boolean invalidTeleport(@NotNull Location location) {
         World world = location.getWorld();
-        if (location.equals(this.location)) return true;
         if (this.world != null && (world == null || !Objects.equals(world, this.world))) return true;
 
         this.location = location;
@@ -527,6 +461,7 @@ public final class PacketStand {
     }
 
     private @NotNull List<Object> createEquipment() {
+        if (!isStand) return Collections.emptyList();
         if (equipments != null) return equipments;
 
         List<Object> packets = new ArrayList<>();
@@ -534,9 +469,7 @@ public final class PacketStand {
         for (ItemSlot slot : ItemSlot.values()) {
             try {
                 ItemStack temp = settings.getEquipment().get(slot);
-                if (temp == null) continue;
-
-                Object item = asNMSCopy.invoke(temp);
+                Object item = asNMSCopy.invoke(temp != null ? temp : EMPTY_ITEM);
 
                 Object packetEquipment;
                 if (MINOR_NUMBER > 15) {
@@ -553,12 +486,12 @@ public final class PacketStand {
         return (equipments = packets);
     }
 
-    public void invalidateEquipment() {
+    public void sendEquipment(@NotNull Collection<Player> players) {
         equipments = null;
-    }
+        if (players.isEmpty()) return;
 
-    public void sendEquipment(Player player) {
-        sendPacket(player, createEquipment().toArray());
+        // Create the packets once and send them to the players.
+        sendPacket(players, createEquipment().toArray());
     }
 
     public @Nullable Object createMetadata() {
@@ -605,26 +538,36 @@ public final class PacketStand {
     private @NotNull List<Object> getDataWatcherItems() {
         try {
             List<Object> dataWatcherItems = new ArrayList<>();
-
-            dataWatcherItems.add(dataWatcherItem.invoke(DWO_ENTITY_DATA, (byte)
-                    ((settings.isFire() ? 0x01 : 0)
-                            | (settings.isInvisible() ? 0x20 : 0)
-                            | (settings.isGlow() ? 0x40 : 0))));
-
-            dataWatcherItems.add(dataWatcherItem.invoke(DWO_ARMOR_STAND_DATA, (byte)
-                    ((settings.isSmall() ? 0x01 : 0)
-                            | (settings.isArms() ? 0x04 : 0)
-                            | (settings.isBasePlate() ? 0 : 0x08)
-                            | (settings.isMarker() ? 0x10 : 0))));
-
-            for (Pose pose : Pose.values()) {
-                addPoses(dataWatcherItems, pose.getDwo(), pose.get(settings));
-            }
-
             String name = settings.getCustomName();
-            Optional<Object> optionalName = Optional.ofNullable(name != null && !name.isEmpty() ? fromStringOrNull.invoke(name) : null);
-            dataWatcherItems.add(dataWatcherItem.invoke(DWO_CUSTOM_NAME, optionalName));
-            dataWatcherItems.add(dataWatcherItem.invoke(DWO_CUSTOM_NAME_VISIBLE, settings.isCustomNameVisible()));
+
+            if (isStand) {
+                dataWatcherItems.add(dataWatcherItem.invoke(DWO_ENTITY_DATA, (byte)
+                        ((settings.isFire() ? 0x01 : 0)
+                                | (settings.isInvisible() ? 0x20 : 0)
+                                | (settings.isGlow() ? 0x40 : 0))));
+
+                dataWatcherItems.add(dataWatcherItem.invoke(DWO_ARMOR_STAND_DATA, (byte)
+                        ((settings.isSmall() ? 0x01 : 0)
+                                | (settings.isArms() ? 0x04 : 0)
+                                | (settings.isBasePlate() ? 0 : 0x08)
+                                | (settings.isMarker() ? 0x10 : 0))));
+
+                for (Pose pose : Pose.values()) {
+                    addPoses(dataWatcherItems, pose.getDwo(), pose.get(settings));
+                }
+
+                Optional<Object> optionalName = Optional.ofNullable(name != null && !name.isEmpty() ? fromStringOrNull.invoke(name) : null);
+                dataWatcherItems.add(dataWatcherItem.invoke(DWO_CUSTOM_NAME, optionalName));
+                dataWatcherItems.add(dataWatcherItem.invoke(DWO_CUSTOM_NAME_VISIBLE, settings.isCustomNameVisible()));
+            } else {
+                Vector scale = settings.getScale();
+                dataWatcherItems.add(dataWatcherItem.invoke(DWO_SCALE_ID, new Vector3f(
+                        (float) scale.getX(),
+                        (float) scale.getY(),
+                        (float) scale.getZ())));
+                dataWatcherItems.add(dataWatcherItem.invoke(DWO_TEXT_ID, fromStringOrNull.invoke(Strings.nullToEmpty(name))));
+                dataWatcherItems.add(dataWatcherItem.invoke(DWO_BACKGROUND_COLOR_ID, settings.getBackgroundColor()));
+            }
 
             return dataWatcherItems;
         } catch (Throwable throwable) {
@@ -637,6 +580,18 @@ public final class PacketStand {
                 (float) Math.toDegrees(angle.getX()),
                 (float) Math.toDegrees(angle.getY()),
                 (float) Math.toDegrees(angle.getZ()))));
+    }
+
+    public void sendMetadata(@NotNull Collection<Player> players) {
+        metadata = null;
+        if (players.isEmpty()) return;
+
+        // Create the packet once and send it to the players.
+        sendPacket(players, createMetadata());
+    }
+
+    public void sendMetadata(Player player) {
+        sendPacket(player, createMetadata());
     }
 
     private @Nullable Object createDestroyEntitiesPacket() {
@@ -693,9 +648,9 @@ public final class PacketStand {
         }
     }
 
-    private static @Nullable Object getArmorStandType() {
+    private static @Nullable Object getType(EntityType type) {
         try {
-            @SuppressWarnings("deprecation") Optional<?> optional = (Optional<?>) byString.invoke(EntityType.ARMOR_STAND.getName());
+            @SuppressWarnings("deprecation") Optional<?> optional = (Optional<?>) byString.invoke(type.getName());
             return optional.orElse(null);
         } catch (Throwable throwable) {
             throwable.printStackTrace();
@@ -703,7 +658,7 @@ public final class PacketStand {
         }
     }
 
-    private static int getEntityTypeId() {
+    private static int getTypeId(Object type) {
         Object ENTITY_TYPE;
         if (XReflection.supports(18)) {
             if (XReflection.supports(21)) {
@@ -740,9 +695,80 @@ public final class PacketStand {
         if (getId == null) return -1;
 
         try {
-            return (int) getId.invoke(ENTITY_TYPE, ARMOR_STAND);
+            return (int) getId.invoke(ENTITY_TYPE, type);
         } catch (Throwable throwable) {
             return -1;
+        }
+    }
+
+    @Getter
+    public enum DWOData {
+        V_21_6(21, 6, "az", "bl", "bm", "bS", "bT", "bU", "bV", "bW", "bX", "bY", "t", "aV", "aX"), // 21_7, 21_8 too
+        V_21_5(21, 5, "am", "aR", "aS", "bw", "bx", "by", "bz", "bA", "bB", "bC", "t", "aH", "aJ"),
+        V_21_4(21, 4, "am", "aO", "aP", "bI", "bJ", "bK", "bL", "bM", "bN", "bO", "t", "aG", "aI"),
+        V_21_2(22, 2, "am", "aO", "aP", "bJ", "bK", "bL", "bM", "bN", "bO", "bP", "t", "aG", "aI"),
+        V_21(21, 0, "ap", "aQ", "aR", "bH", "bI", "bJ", "bK", "bL", "bM", "bN", "u", "aL", "aN"),
+        V_20_6(20, 6, "ap", "aS", "aT", "bG", "bH", "bI", "bJ", "bK", "bL", "bM", "u", "aN", "aP"),
+        V_20_2(20, 2, "ao", "aU", "aV", "bC", "bD", "bE", "bF", "bG", "bH", "bI", "u", "aM", "aO"),
+        V_20(20, 0, "an", "aU", "aV", "bC", "bD", "bE", "bF", "bG", "bH", "bI", "s", "aL", "aN"),
+        V_19_4(19, 4, "an", "aR", "aS", "bB", "bC", "bD", "bE", "bF", "bG", "bH", "t", "aK", "aM"),
+        V_18_2(18, 2, "Z", "aM", "aN", "bG", "bH", "bI", "bJ", "bK", "bL", "bM", null, null, null),
+        V_18(18, 0, "aa", "aL", "aM", "bH", "bI", "bJ", "bK", "bL", "bM", "bN", null, null, null),
+        V_MIXED(-1, -1, "Z", "aJ", "aK", "bG", "bH", "bI", "bJ", "bK", "bL", "bM", null, null, null);
+
+        private final int minor;
+        private final int patch;
+
+        // DATA_SHARED_FLAGS_ID, DATA_CUSTOM_NAME, DATA_CUSTOM_NAME_VISIBLE | DATA_CLIENT_FLAGS, DATA_X_POSE | DATA_SCALE_ID | DATA_TEXT_ID, DATA_BACKGROUND_COLOR_ID
+        private final String entityData;
+        private final String customName;
+        private final String customNameVisible;
+        private final String armorStandData;
+        private final String headPose;
+        private final String bodyPose;
+        private final String leftArmPose;
+        private final String rightArmPose;
+        private final String leftLegPose;
+        private final String rightLegPose;
+        private final String displayScale;
+        private final String displayText;
+        private final String displayBackgroundColor;
+
+        DWOData(int minor,
+                int patch,
+                String entityData,
+                String customName,
+                String customNameVisible,
+                String armorStandData,
+                String headPose,
+                String bodyPose,
+                String leftArmPose,
+                String rightArmPose,
+                String leftLegPose,
+                String rightLegPose, String displayScale, String displayText, String displayBackgroundColor) {
+            this.minor = minor;
+            this.patch = patch;
+            this.entityData = entityData;
+            this.customName = customName;
+            this.customNameVisible = customNameVisible;
+            this.armorStandData = armorStandData;
+            this.headPose = headPose;
+            this.bodyPose = bodyPose;
+            this.leftArmPose = leftArmPose;
+            this.rightArmPose = rightArmPose;
+            this.leftLegPose = leftLegPose;
+            this.rightLegPose = rightLegPose;
+            this.displayScale = displayScale;
+            this.displayText = displayText;
+            this.displayBackgroundColor = displayBackgroundColor;
+        }
+
+        public static DWOData getByVersion() {
+            for (DWOData data : values()) {
+                if (data != DWOData.V_MIXED
+                        && XReflection.supports(data.minor, data.patch)) return data;
+            }
+            return DWOData.V_MIXED;
         }
     }
 }
