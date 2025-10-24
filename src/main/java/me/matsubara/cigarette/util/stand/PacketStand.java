@@ -416,7 +416,7 @@ public final class PacketStand {
         }
     }
 
-    public void sendLocation(Player player) {
+    private void sendLocation(Player player) {
         // No need to send a head rotation packet (RotateHeadPacket/EntityHeadRotation).
         sendPacket(player, createTeleport());
     }
@@ -703,7 +703,8 @@ public final class PacketStand {
 
     @Getter
     public enum DWOData {
-        V_21_6(21, 6, "az", "bl", "bm", "bS", "bT", "bU", "bV", "bW", "bX", "bY", "t", "aV", "aX"), // 21_7, 21_8 too
+        V_21_9(21, 9, "aA", "bm", "bn", "n", "o", "p", "q", "r", "s", "t", "t", "aW", "aY"), // 21_10
+        V_21_6(21, 6, "az", "bl", "bm", "bS", "bT", "bU", "bV", "bW", "bX", "bY", "t", "aV", "aX"), // 21_7, 21_8
         V_21_5(21, 5, "am", "aR", "aS", "bw", "bx", "by", "bz", "bA", "bB", "bC", "t", "aH", "aJ"),
         V_21_4(21, 4, "am", "aO", "aP", "bI", "bJ", "bK", "bL", "bM", "bN", "bO", "t", "aG", "aI"),
         V_21_2(22, 2, "am", "aO", "aP", "bJ", "bK", "bL", "bM", "bN", "bO", "bP", "t", "aG", "aI"),
@@ -719,7 +720,11 @@ public final class PacketStand {
         private final int minor;
         private final int patch;
 
-        // DATA_SHARED_FLAGS_ID, DATA_CUSTOM_NAME, DATA_CUSTOM_NAME_VISIBLE | DATA_CLIENT_FLAGS, DATA_X_POSE | DATA_SCALE_ID | DATA_TEXT_ID, DATA_BACKGROUND_COLOR_ID
+        // Entity = DATA_SHARED_FLAGS_ID, DATA_CUSTOM_NAME, DATA_CUSTOM_NAME_VISIBLE
+        // ArmorStand = DATA_CLIENT_FLAGS, DATA_X_POSE
+        // Display = DATA_SCALE_ID
+        // TextDisplay = DATA_TEXT_ID, DATA_BACKGROUND_COLOR_ID
+
         private final String entityData;
         private final String customName;
         private final String customNameVisible;
