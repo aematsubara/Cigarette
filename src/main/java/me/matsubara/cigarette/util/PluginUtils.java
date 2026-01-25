@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -117,7 +118,7 @@ public final class PluginUtils {
                 return null;
             }
 
-            // Only replace file if an exception ocurrs.
+            // Only replace the file if an exception ocurrs.
             FileUtils.deleteQuietly(file);
             error.accept(file);
 
@@ -135,6 +136,19 @@ public final class PluginUtils {
             Files.write(path, lines, StandardCharsets.UTF_8);
         } catch (IOException exception) {
             exception.printStackTrace();
+        }
+    }
+
+    public static <T extends Enum<T>> T getOrNull(Class<T> clazz, String name) {
+        if (name == null) return null;
+        return getOrDefault(clazz, name, null);
+    }
+
+    public static <T extends Enum<T>> T getOrDefault(Class<T> clazz, @NotNull String name, T defaultValue) {
+        try {
+            return Enum.valueOf(clazz, name.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            return defaultValue;
         }
     }
 }

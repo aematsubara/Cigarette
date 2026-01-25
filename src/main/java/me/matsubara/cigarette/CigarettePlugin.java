@@ -12,6 +12,7 @@ import me.matsubara.cigarette.listener.PlayerItemConsume;
 import me.matsubara.cigarette.manager.CigaretteManager;
 import me.matsubara.cigarette.manager.StandManager;
 import me.matsubara.cigarette.util.PluginUtils;
+import org.bstats.bukkit.Metrics;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -24,7 +25,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -38,6 +38,7 @@ public final class CigarettePlugin extends JavaPlugin {
     private final NamespacedKey identifier = new NamespacedKey(this, "cigarette-type");
 
     private static final List<String> SPECIAL_SECTIONS = Collections.emptyList();
+    private static final int BSTATS_ID = 28671;
 
     @Override
     public void onEnable() {
@@ -47,6 +48,9 @@ public final class CigarettePlugin extends JavaPlugin {
             manager.disablePlugin(this);
             return;
         }
+
+        // Enable bStats.
+        new Metrics(this, BSTATS_ID);
 
         cigaretteManager = new CigaretteManager(this);
         standManager = new StandManager(this);
@@ -152,8 +156,7 @@ public final class CigarettePlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         if (cigaretteManager == null) return;
-        Set<Cigarette> cigarettes = cigaretteManager.getCigarettes();
-        if (cigarettes != null) cigarettes.forEach(Cigarette::extinguish);
+        cigaretteManager.getCigarettes().forEach(Cigarette::extinguish);
     }
 
     public String getString(String path) {

@@ -187,7 +187,7 @@ public final class PacketStand {
         REGISTRY_ACCESS = XReflection.supports(20, 6) ? Reflection.getNMSClass("core", "RegistryAccess", "IRegistryCustom") : null;
         IMMUTABLE_REGISTRY_ACCESS = XReflection.supports(20, 6) ? Reflection.getNMSClass("core", "RegistryAccess$ImmutableRegistryAccess", "IRegistryCustom$c") : null;
         BUILT_IN_REGISTRIES = XReflection.supports(20, 6) ? Reflection.getNMSClass("core.registries", "BuiltInRegistries") : null;
-        DEFAULTED_REGISTRY = XReflection.supports(20, 6) ? Reflection.getNMSClass("core", "DefaultedRegistry", "RegistryBlocks") : null;
+        DEFAULTED_REGISTRY = XReflection.supports(19, 3) ? Reflection.getNMSClass("core", "DefaultedRegistry", "RegistryBlocks") : null;
         POSITION_MOVE_ROTATION = XReflection.supports(21, 2) ? Reflection.getNMSClass("world.entity", "PositionMoveRotation", "PositionMoveRotation") : null;
         ENTITY_PLAYER = Reflection.getNMSClass("server.level", "ServerPlayer", "EntityPlayer");
         CRAFT_PLAYER = Reflection.getCraftClass("entity", "CraftPlayer");

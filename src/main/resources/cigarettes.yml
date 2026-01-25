@@ -61,9 +61,11 @@ cigarettes:
       - CONFUSION, 60, 0
     crafting:
       shaped: false
+      # GRASS is for old versions, SHORT_GRASS is for new ones.
       ingredients:
         - PAPER
-        - GUNPOWDER
+        - GRASS
+        - SHORT_GRASS
       shape: [ ]
     particles: SMOKE_LARGE, 0, 0.1, 1,0, 0.1, 0.005
   classic-pipe:

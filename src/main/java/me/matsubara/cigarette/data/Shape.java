@@ -3,6 +3,7 @@ package me.matsubara.cigarette.data;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import me.matsubara.cigarette.CigarettePlugin;
+import me.matsubara.cigarette.util.PluginUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -39,8 +40,8 @@ public final class Shape {
         NamespacedKey key = new NamespacedKey(plugin, "cigarette_" + name);
         recipe = shaped ? new ShapedRecipe(key, item) : new ShapelessRecipe(key, item);
 
-        if (shaped) {
-            ((ShapedRecipe) recipe).shape(shape.toArray(new String[0]));
+        if (recipe instanceof ShapedRecipe temp) {
+            temp.shape(shape.toArray(new String[0]));
         }
 
         for (String ingredient : ingredients) {
@@ -48,20 +49,17 @@ public final class Shape {
             String[] split = StringUtils.split(StringUtils.deleteWhitespace(ingredient), ',');
             if (split.length == 0) split = StringUtils.split(ingredient, ' ');
 
-            Material type = Material.valueOf(split[0]);
+            Material type = PluginUtils.getOrNull(Material.class, split[0]);
+            if (type == null) continue;
 
-            char ingredientKey = ' ';
+            char ingredientKey = split.length > 1 ? split[1].charAt(0) : ' ';
 
-            if (split.length > 1) {
-                ingredientKey = split[1].charAt(0);
-            }
-
-            if (shaped) {
+            if (recipe instanceof ShapedRecipe temp) {
                 // Empty space is used for AIR.
                 if (ingredientKey == ' ') continue;
-                ((ShapedRecipe) recipe).setIngredient(ingredientKey, type);
-            } else {
-                ((ShapelessRecipe) recipe).addIngredient(type);
+                temp.setIngredient(ingredientKey, type);
+            } else if (recipe instanceof ShapelessRecipe temp) {
+                temp.addIngredient(type);
             }
         }
 
